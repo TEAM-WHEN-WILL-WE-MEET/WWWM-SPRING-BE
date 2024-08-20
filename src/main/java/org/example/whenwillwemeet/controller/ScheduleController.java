@@ -26,6 +26,19 @@ public class ScheduleController {
     @Autowired
     ScheduleValidation scheduleValidation;
 
+    @GetMapping(value="/getSchedule")
+    public ResponseEntity<CommonResponse> getSchedule(@RequestParam("appointmentId") String appointmentId){
+        log.info("[ScheduleController]-[getSchedule] API Called");
+
+        if (appointmentId.isEmpty()) {
+            log.warn("[AppointmentController]-[getAppointment] AppointmentId needed");
+            CommonResponse response = new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId needed");
+        }
+
+        CommonResponse response = scheduleService.getSchedule(appointmentId);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
     @PutMapping(value="/updateSchedule")
     public ResponseEntity<CommonResponse> login(@Valid @RequestBody Schedule schedule){
         log.info("[ScheduleController]-[updateSchedule] API Called");

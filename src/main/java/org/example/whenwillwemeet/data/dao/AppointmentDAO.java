@@ -42,7 +42,11 @@ public class AppointmentDAO {
 
     public CommonResponse getAppointmentById(String id) {
         try{
-            return new CommonResponse(true, HttpStatus.OK, "Appointment fetched", appointmentRepository.findById(id));
+            Optional<AppointmentModel> appointmentModel = appointmentRepository.findById(id);
+            if(appointmentModel.isPresent())
+                return new CommonResponse(true, HttpStatus.OK, "Appointment fetched", appointmentModel);
+            else
+                throw new RuntimeException("Appointment not found with id: " + id);
         }catch (Exception e){
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Appointment fetch failed with : [" + e + "]");
         }

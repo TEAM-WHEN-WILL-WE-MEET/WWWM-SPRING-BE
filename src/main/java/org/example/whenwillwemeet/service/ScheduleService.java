@@ -3,6 +3,7 @@ package org.example.whenwillwemeet.service;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
+import org.example.whenwillwemeet.data.dao.AppointmentDAO;
 import org.example.whenwillwemeet.data.dao.ScheduleDAO;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.Schedule;
@@ -26,6 +27,20 @@ public class ScheduleService {
 
     @Autowired
     private ScheduleDAO scheduleDAO;
+
+    @Autowired
+    private AppointmentDAO appointmentDAO;
+
+    public CommonResponse getSchedule(String appointmentId) {
+        Optional<AppointmentModel> optionalAppointment = appointmentDAO.getAppointmentModelById(appointmentId);
+
+        return optionalAppointment.map(appointmentModel -> {
+            log.info("[ScheduleService]-[getSchedule] Schedule found for appointment ID: {}", appointmentId);
+            return new CommonResponse(true, HttpStatus.OK, "Schedule fetched", appointmentModel.getSchedules());
+        }).orElse(
+                new CommonResponse(false, HttpStatus.NOT_FOUND, "Appointment not found", null)
+        );
+    }
 
     // 주어진 Schedule 정보를 기반으로 현재 Appointment 모델과 비교하여 사용자를 TimeSlot에 추가하거나 제거
     // 즉, Frontend에서 발생한 이벤트를 전달해주면 자동으로 현재 DB의 데이터와 비교하여 Toggle
