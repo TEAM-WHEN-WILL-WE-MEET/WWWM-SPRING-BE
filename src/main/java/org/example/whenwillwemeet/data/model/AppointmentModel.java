@@ -7,7 +7,6 @@ import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.IndexDirection;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -29,9 +28,9 @@ public class AppointmentModel {
 
     private String name;
 
-    @DBRef
+    // @DBRef
     private List<Schedule> schedules;
-    @DBRef
+    // @DBRef
     private List<User> users;
 
     private LocalDateTime startTime;
