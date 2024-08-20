@@ -1,7 +1,6 @@
 package org.example.whenwillwemeet.data.dao;
 
 import lombok.extern.slf4j.Slf4j;
-import org.aspectj.apache.bcel.classfile.ConstantValue;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.constant.ConstantVariables;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
@@ -17,6 +16,7 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -27,6 +27,14 @@ public class AppointmentDAO {
     @Autowired
     public AppointmentDAO(AppointmentRepository appointmentRepository) {
         this.appointmentRepository = appointmentRepository;
+    }
+
+    public Optional<AppointmentModel> getAppointmentModelById(String id){
+        try{
+            return appointmentRepository.findById(id);
+        }catch (Exception e){
+            return Optional.empty();
+        }
     }
 
     public CommonResponse getAppointmentById(String id) {
