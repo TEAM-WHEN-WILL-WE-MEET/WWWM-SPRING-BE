@@ -1,19 +1,20 @@
 package org.example.whenwillwemeet.data.dao;
 
+import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.constant.ConstantVariables;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.Schedule;
 import org.example.whenwillwemeet.data.model.TimeSlot;
+import org.example.whenwillwemeet.data.model.User;
 import org.example.whenwillwemeet.data.repository.AppointmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,7 @@ import java.util.UUID;
 @Slf4j
 @Component
 public class AppointmentDAO {
+    @Autowired
     private final AppointmentRepository appointmentRepository;
 
     @Autowired
@@ -49,8 +51,8 @@ public class AppointmentDAO {
     public CommonResponse createAppointment(AppointmentModel appointment) {
         try {
             log.info("[AppointmentDAO]-[createAppointment] Current Appointment Expiration time : {}h", ConstantVariables.APPOINTMENT_EXPIRATION_TIME);
-            // APPOINTMENT_EXPIRATION_TIME static 상수를 통해 ExpireAt 설정
-            appointment.setExpireAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusHours(ConstantVariables.APPOINTMENT_EXPIRATION_TIME));
+
+            appointment.initializeTimes();
 
             // startTime부터 endTime까지 15분 단위로 TimeSlot 생성
             List<TimeSlot> timeSlots = createTimeSlots(appointment.getStartTime(), appointment.getEndTime());
@@ -73,19 +75,13 @@ public class AppointmentDAO {
     }
 
     private List<TimeSlot> createTimeSlots(LocalDateTime startTime, LocalDateTime endTime) {
-        List<TimeSlot> timeSlots = new ArrayList<>();
-        LocalDateTime currentTime = startTime;
-
-        while (currentTime.isBefore(endTime) || currentTime.equals(endTime)) {
-            TimeSlot timeSlot = new TimeSlot();
-            timeSlot.setTime(currentTime);
-            timeSlot.setUsers(new ArrayList<>());
-            timeSlots.add(timeSlot);
-
-            currentTime = currentTime.plus(15, ChronoUnit.MINUTES);
+        List<TimeSlot> slots = new ArrayList<>();
+        LocalDateTime current = startTime;
+        while (current.isBefore(endTime)) {
+            slots.add(new TimeSlot(current, new ArrayList<>()));
+            current = current.plusMinutes(15);
         }
-
-        return timeSlots;
+        return slots;
     }
 
     public CommonResponse updateAppointment(AppointmentModel appointment) {
@@ -99,6 +95,23 @@ public class AppointmentDAO {
             }
         } catch (Exception e){
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Appointment update failed with : [" + e + "]");
+        }
+    }
+
+    @Transactional
+    public CommonResponse addUserToAppointment(String appointmentId, User user) {
+        try {
+            User newUser = new User();
+            newUser.setName(user.getName());
+            newUser.setPassword(user.getPassword());
+            newUser.setEmail(user.getEmail());
+            newUser.setPhoneNumber(user.getPhoneNumber());
+
+            appointmentRepository.addUser(appointmentId, newUser);
+
+            return new CommonResponse(true, HttpStatus.OK, "User added to appointment successfully");
+        } catch (Exception e) {
+            return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR,"Failed to add user to appointment: " + e.getMessage());
         }
     }
 }

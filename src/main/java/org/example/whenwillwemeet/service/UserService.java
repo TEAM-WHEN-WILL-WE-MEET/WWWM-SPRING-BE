@@ -5,6 +5,7 @@ import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.data.dao.AppointmentDAO;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.User;
+import org.example.whenwillwemeet.data.repository.AppointmentRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -55,7 +56,7 @@ public class UserService {
             newUser.setPhoneNumber(user.getPhoneNumber());
 
             appointmentModel.getUsers().add(newUser);
-            CommonResponse updateResponse = appointmentDAO.updateAppointment(appointmentModel);
+            CommonResponse updateResponse = appointmentDAO.addUserToAppointment(appointmentModel.getId(), newUser);
 
             if (updateResponse.isSuccess()) {
                 newUser.setPassword(null);
