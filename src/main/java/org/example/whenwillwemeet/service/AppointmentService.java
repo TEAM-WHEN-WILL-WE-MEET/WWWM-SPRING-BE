@@ -11,6 +11,10 @@ public class AppointmentService {
     @Autowired
     private AppointmentDAO appointmentDAO;
 
+    public CommonResponse getAppointment(String appointmentId){
+        return appointmentDAO.getAppointmentById(appointmentId);
+    }
+
     public CommonResponse createAppointment(AppointmentModel appointmentModel){
         return appointmentDAO.createAppointment(appointmentModel);
     }

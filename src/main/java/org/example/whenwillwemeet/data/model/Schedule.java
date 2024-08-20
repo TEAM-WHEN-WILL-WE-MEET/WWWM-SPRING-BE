@@ -15,5 +15,6 @@ public class Schedule {
     private String id;
     private LocalDateTime date;
     private List<TimeSlot> times;
+    private String appointmentId;
 }
 
