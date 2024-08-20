@@ -11,10 +11,7 @@ import org.example.whenwillwemeet.service.AppointmentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -30,10 +27,18 @@ public class AppointmentController {
     @Autowired
     AppointmentValidation appointmentValidation;
 
-    @Autowired
-    private ConfigUtil configUtil;
+    @GetMapping(value="/getAppointment")
+    public ResponseEntity<CommonResponse> getAppointment(@RequestParam("appointmentId") String appointmentId){
+        log.info("[AppointmentController]-[getAppointment] API Called");
 
-    private CommonResponse response;
+        if (appointmentId.isEmpty()) {
+            log.warn("[AppointmentController]-[getAppointment] AppointmentId needed");
+            CommonResponse response = new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId needed");
+        }
+
+        CommonResponse response = appointmentService.getAppointment(appointmentId);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
 
     @PostMapping(value="/createAppointment")
     public ResponseEntity<CommonResponse> createAppointment(@Valid @RequestBody AppointmentModel appointmentModel){

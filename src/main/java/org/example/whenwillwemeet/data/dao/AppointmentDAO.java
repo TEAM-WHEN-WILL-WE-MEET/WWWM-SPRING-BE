@@ -33,6 +33,7 @@ public class AppointmentDAO {
         try{
             return appointmentRepository.findById(id);
         }catch (Exception e){
+            log.error("[AppointmentDAO]-[getAppointmentModelById] Appointment {} doesn't exists", id);
             return Optional.empty();
         }
     }
@@ -91,7 +92,7 @@ public class AppointmentDAO {
         try {
             if (appointmentRepository.existsById(appointment.getId())) {
                 AppointmentModel updatedAppointment = appointmentRepository.save(appointment);
-                log.info("[AppointmentDAO]-[createAppointment] Appointment [{}] updated", updatedAppointment.getId());
+                log.info("[AppointmentDAO]-[updateAppointment] Appointment [{}] updated", updatedAppointment.getId());
                 return new CommonResponse(true, HttpStatus.OK, "Appointment updated", updatedAppointment);
             } else {
                 throw new RuntimeException("Appointment not found with id: " + appointment.getId());
