@@ -1,5 +1,6 @@
 package org.example.whenwillwemeet.data.dao;
 
+import lombok.extern.slf4j.Slf4j;
 import org.aspectj.apache.bcel.classfile.ConstantValue;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.constant.ConstantVariables;
@@ -18,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Component
 public class AppointmentDAO {
     private final AppointmentRepository appointmentRepository;
@@ -37,11 +39,13 @@ public class AppointmentDAO {
 
     public CommonResponse createAppointment(AppointmentModel appointment) {
         try {
+            log.info("[AppointmentDAO]-[createAppointment] Current Appointment Expiration time : {}h", ConstantVariables.APPOINTMENT_EXPIRATION_TIME);
             // APPOINTMENT_EXPIRATION_TIME static 상수를 통해 ExpireAt 설정
             appointment.setExpireAt(LocalDateTime.now(ZoneId.of("Asia/Seoul")).plusHours(ConstantVariables.APPOINTMENT_EXPIRATION_TIME));
 
             // startTime부터 endTime까지 15분 단위로 TimeSlot 생성
             List<TimeSlot> timeSlots = createTimeSlots(appointment.getStartTime(), appointment.getEndTime());
+            log.info("[AppointmentDAO]-[createAppointment] {} time slots created", timeSlots.size());
 
             // 각 Schedule에 대해 TimeSlot 설정
             if (appointment.getSchedules() != null) {
@@ -52,7 +56,7 @@ public class AppointmentDAO {
             }
 
             AppointmentModel savedAppointment = appointmentRepository.save(appointment);
-
+            log.info("[AppointmentDAO]-[createAppointment] Appointment [{}] created", savedAppointment.getId());
             return new CommonResponse(true, HttpStatus.OK, "Appointment created", savedAppointment);
         } catch (Exception e) {
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Appointment creation failed with : [" + e + "]");
@@ -79,6 +83,7 @@ public class AppointmentDAO {
         try {
             if (appointmentRepository.existsById(appointment.getId())) {
                 AppointmentModel updatedAppointment = appointmentRepository.save(appointment);
+                log.info("[AppointmentDAO]-[createAppointment] Appointment [{}] updated", updatedAppointment.getId());
                 return new CommonResponse(true, HttpStatus.OK, "Appointment updated", updatedAppointment);
             } else {
                 throw new RuntimeException("Appointment not found with id: " + appointment.getId());
