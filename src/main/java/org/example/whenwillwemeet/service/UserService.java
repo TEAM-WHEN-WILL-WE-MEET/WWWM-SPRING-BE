@@ -3,6 +3,7 @@ package org.example.whenwillwemeet.service;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.data.dao.AppointmentDAO;
+import org.example.whenwillwemeet.data.dao.UserDAO;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.User;
 import org.example.whenwillwemeet.data.repository.AppointmentRepository;
@@ -19,6 +20,9 @@ import java.util.Optional;
 public class UserService {
     @Autowired
     private AppointmentDAO appointmentDAO;
+
+    @Autowired
+    private UserDAO userDAO;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -88,12 +92,10 @@ public class UserService {
         existingUser.setEmail(updatedUser.getEmail());
         existingUser.setPhoneNumber(updatedUser.getPhoneNumber());
 
-        // AppointmentModel 업데이트
-        CommonResponse updateResponse = appointmentDAO.updateAppointment(appointmentModel);
-
-        if (updateResponse.isSuccess()) {
+        // User 업데이트
+        if (userDAO.updateUserInAppointment(appointmentModel.getId(), existingUser)) {
             existingUser.setPassword(null);
-            return new CommonResponse(true, HttpStatus.OK, "User information updated successfully", existingUser);
+            return new CommonResponse(true, HttpStatus.OK, "User information updated successfully [" + existingUser.getName() + "]");
         } else {
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update user information");
         }

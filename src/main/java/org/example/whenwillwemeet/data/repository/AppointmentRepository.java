@@ -12,4 +12,8 @@ public interface AppointmentRepository extends MongoRepository<AppointmentModel,
     @Query("{ 'id': ?0 }")
     @Update("{ $addToSet: { 'users': ?1 } }")
     void addUser(String appointmentId, User user);
+
+    @Query("{ 'id': ?0 , 'users.name': ?1}")
+    @Update("{ $set: { 'users': ?2 } }")
+    void updateUser(String appointmentId, String name, User user);
 }
