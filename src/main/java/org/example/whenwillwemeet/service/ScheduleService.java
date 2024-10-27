@@ -98,4 +98,8 @@ public class ScheduleService {
                 .filter(ts -> ts.getTime().equals(time))
                 .findFirst();
     }
+
+    public CommonResponse getUserSchedule(String appointmentId, String userName) {
+        return scheduleDAO.getUserSchedule(appointmentId, userName);
+    }
 }

@@ -31,8 +31,8 @@ public class ScheduleController {
         log.info("[ScheduleController]-[getSchedule] API Called");
 
         if (appointmentId.isEmpty()) {
-            log.warn("[AppointmentController]-[getAppointment] AppointmentId needed");
-            CommonResponse response = new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId needed");
+            log.warn("[ScheduleController]-[getSchedule] AppointmentId needed");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId needed"));
         }
 
         CommonResponse response = scheduleService.getSchedule(appointmentId);
@@ -47,11 +47,23 @@ public class ScheduleController {
 
         if (!validationErrors.isEmpty()) {
             log.warn("[ScheduleController]-[updateSchedule] Validation failed: {}", validationErrors);
-            CommonResponse response = new CommonResponse(false, HttpStatus.BAD_REQUEST, String.join(", ", validationErrors));
-            return ResponseEntity.status(response.getStatus()).body(response);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponse(false, HttpStatus.BAD_REQUEST, String.join(", ", validationErrors)));
         }
 
         CommonResponse response = scheduleService.updateSchedule(schedule, schedule.getTimes().getFirst().getUsers().getFirst());
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
+
+    @GetMapping(value="/getUserSchedule")
+    public ResponseEntity<CommonResponse> getUserSchedule(@RequestParam("appointmentId") String appointmentId, @RequestParam("userName") String userName){
+        log.info("[ScheduleController]-[getUserSchedule] API Called");
+
+        if (appointmentId.isEmpty() || userName.isEmpty()) {
+            log.warn("[ScheduleController]-[getUserSchedule] AppointmentId, UserName needed");
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId, UserName needed"));
+        }
+
+        CommonResponse response = scheduleService.getUserSchedule(appointmentId, userName);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 }
