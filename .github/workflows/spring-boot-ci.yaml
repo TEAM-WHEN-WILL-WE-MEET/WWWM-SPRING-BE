@@ -41,11 +41,23 @@ jobs:
           username: ${{ secrets.ORG_JUDEMIN_DOCKERHUB_USERNAME }}
           password: ${{ secrets.ORG_JUDEMIN_DOCKERHUB_PASSWORD }}
 
+      - name: Set Docker Image Tag
+        id: docker_tag
+        run: |
+          BRANCH_NAME=${GITHUB_REF#refs/heads/}
+          if [ "$BRANCH_NAME" == "main" ]; then
+            TAG="latest"
+          else
+            # 도커 태그로 사용할 수 없는 문자 치환
+            TAG=$(echo "$BRANCH_NAME" | tr '/' '-' | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]._-')
+          fi
+          echo "DOCKER_TAG=$TAG" >> $GITHUB_ENV
+
       - name: Docker build and push
         uses: docker/build-push-action@v2
         with:
           context: .
           push: true
-          tags: judemin/wwwm-spring-be:${{ github.ref == 'refs/heads/main' && 'latest' || github.ref_name }}
+          tags: judemin/wwwm-spring-be:${{ env.DOCKER_TAG }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
