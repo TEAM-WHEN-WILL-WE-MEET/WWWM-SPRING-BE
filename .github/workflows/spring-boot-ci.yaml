@@ -56,7 +56,7 @@ jobs:
           # Dockerfile이 위치한 디렉토리를 지정
           context: .
           push: true
-          tags: judemin/wwwm-spring-be:no-auth-based
+          tags: judemin/wwwm-spring-be:latest
           # GitHub Action Cache
           cache-from: type=gha
           cache-to: type=gha,mode=max
