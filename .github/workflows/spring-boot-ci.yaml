@@ -2,7 +2,6 @@ name: Spring Boot CI with Gradle
 
 on:
   push:
-    branches: [ "main" ]
 
 permissions:
   contents: read
@@ -11,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: Checkout
         uses: actions/checkout@v3
 
       - name: Set up JDK 17
@@ -20,20 +19,13 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      ## create application-private.properties
-      - name: make application-private.properties
+      - name: Create application-private.properties
         run: |
-          ## create application-private.properties
           cd ./src/main/resources
-          
-          # application-private.properties 파일 생성
           touch ./application-private.properties
-          
-          # GitHub-Actions 에서 설정한 값을 application-private.properties 파일에 쓰기
           echo "${{ secrets.SPRING_BE_APPLICATION_PRIVATE }}" >> ./application-private.properties
         shell: bash
 
-      # gradle build
       - name: Build with Gradle
         run: |
           chmod +x ./gradlew
@@ -50,13 +42,10 @@ jobs:
           password: ${{ secrets.ORG_JUDEMIN_DOCKERHUB_PASSWORD }}
 
       - name: Docker build and push
-        id: docker_build
         uses: docker/build-push-action@v2
         with:
-          # Dockerfile이 위치한 디렉토리를 지정
           context: .
           push: true
-          tags: judemin/wwwm-spring-be:latest
-          # GitHub Action Cache
+          tags: judemin/wwwm-spring-be:${{ github.ref == 'refs/heads/main' && 'latest' || github.ref_name }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
