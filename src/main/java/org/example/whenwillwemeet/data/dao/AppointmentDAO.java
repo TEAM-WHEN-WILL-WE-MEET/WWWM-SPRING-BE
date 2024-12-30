@@ -83,7 +83,8 @@ public class AppointmentDAO {
         LocalDateTime current = startTime;
         while (current.isBefore(endTime)) {
             slots.add(new TimeSlot(current, new ArrayList<>()));
-            current = current.plusMinutes(15);
+            // 10분 단위로 TimeSlot을 생성하도록 변경
+            current = current.plusMinutes(10);
         }
         return slots;
     }
