@@ -50,7 +50,7 @@ public class ScheduleController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponse(false, HttpStatus.BAD_REQUEST, String.join(", ", validationErrors)));
         }
 
-        CommonResponse response = scheduleService.updateSchedule(schedule, schedule.getTimes().getFirst().getUsers().getFirst());
+        CommonResponse response = scheduleService.updateSchedule(schedule);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
 

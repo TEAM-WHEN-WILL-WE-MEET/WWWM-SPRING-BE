@@ -7,6 +7,7 @@ import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.Schedule;
 import org.example.whenwillwemeet.data.model.TimeSlot;
+import org.example.whenwillwemeet.data.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -34,6 +35,18 @@ public class ScheduleDAO {
 
     public ScheduleDAO(MongoTemplate mongoTemplate) {
         this.mongoTemplate = mongoTemplate;
+    }
+
+    // User가 약속 일정 내에 존재하는지 여부를 검사하는 메소드
+    public boolean isUserExistsInAppointment(String appointmentId, String userName) {
+        Query query = new Query(Criteria.where("_id").is(new ObjectId(appointmentId))
+                .and("users._id").is(userName));
+
+        // exists를 통해 존재 여부만 확인
+        boolean exists = mongoTemplate.exists(query, "appointments");
+        log.warn("User exists: {}", exists);
+
+        return exists;
     }
 
     public void addUserToTimeSlot(String appointmentId, String scheduleId, LocalDateTime time, String userName, String zoneId) {
@@ -65,7 +78,9 @@ public class ScheduleDAO {
     public CommonResponse getUserSchedule(String appointmentId, String userName) {
         try{
             Optional<AppointmentModel> appointmentModel = appointmentDAO.getAppointmentModelById(appointmentId);
-            if(appointmentModel.isPresent()) {
+            if(!isUserExistsInAppointment(appointmentId, userName)) {
+                throw new RuntimeException("User [" + userName + "] not found in " + appointmentId);
+            } else if(appointmentModel.isPresent()) {
                 List<Schedule> userSchedule = new ArrayList<>();
 
                 for(Schedule i : appointmentModel.get().getSchedules()){

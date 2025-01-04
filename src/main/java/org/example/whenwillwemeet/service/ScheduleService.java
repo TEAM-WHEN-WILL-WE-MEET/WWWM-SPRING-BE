@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -45,7 +46,7 @@ public class ScheduleService {
     // 주어진 Schedule 정보를 기반으로 현재 Appointment 모델과 비교하여 사용자를 TimeSlot에 추가하거나 제거
     // 즉, Frontend에서 발생한 이벤트를 전달해주면 자동으로 현재 DB의 데이터와 비교하여 Toggle
     @Transactional
-    public CommonResponse updateSchedule(Schedule inputSchedule, String userName) {
+    public CommonResponse updateSchedule(Schedule inputSchedule) {
         try {
             String appointmentId = inputSchedule.getAppointmentId();
 
@@ -54,6 +55,16 @@ public class ScheduleService {
 
             if (!appointmentOpt.isPresent())
                 throw new RuntimeException("Appointment not found with id: " + appointmentId);
+
+            // InputSchedule의 TimeSlot의 User들이 상이하면 Throw Exception
+            String userName = inputSchedule.getTimes().getFirst().getUsers().getFirst();
+            for (TimeSlot inputTimeSlot : inputSchedule.getTimes())
+                if(!Objects.equals(userName, inputTimeSlot.getUsers().getFirst()))
+                    throw new RuntimeException("Different UserName Exists");
+
+            // User가 존재하지 않으면 Throw Exception
+            if(!scheduleDAO.isUserExistsInAppointment(appointmentId, userName))
+                throw new RuntimeException("User [" + userName + "] not found in " + appointmentId);
 
             AppointmentModel appointment = appointmentOpt.get();
 
@@ -88,8 +99,8 @@ public class ScheduleService {
             log.info("Schedule {} User {} updated", inputSchedule.getDate(), userName);
             return new CommonResponse(true, HttpStatus.OK, "Schedule [" + inputSchedule.getDate() + "], User [" + userName + "] updated");
         } catch(Exception e){
-            log.error("Schedule {}, User {} update failed with : {}", inputSchedule.getDate(), userName, e.toString());
-            return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Schedule [" + inputSchedule.getDate() + "], User [" + userName + "] update failed with : [" + e + "]");
+            log.error("Schedule {} update failed with : {}", inputSchedule.getDate(), e.toString());
+            return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Schedule [" + inputSchedule.getDate() + "] update failed with : [" + e + "]");
         }
     }
 
