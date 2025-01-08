@@ -50,7 +50,7 @@ public class AppointmentModel {
         ZonedDateTime nowInAppointmentZone = ZonedDateTime.now(appointmentZoneId);
         log.info("[AppointmentModel]-[initializeTimes] Now In Appointment TimeZone {}", nowInAppointmentZone);
 
-        this.createdAt = nowInAppointmentZone.toLocalDateTime();
+        this.createdAt = nowInAppointmentZone.withZoneSameInstant(ZoneId.of(this.timeZone)).toLocalDateTime();
         this.expireAt = nowInAppointmentZone.plusDays(ConstantVariables.APPOINTMENT_EXPIRATION_TIME).toLocalDateTime();
     }
 }

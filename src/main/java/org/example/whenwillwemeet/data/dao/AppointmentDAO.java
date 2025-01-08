@@ -3,6 +3,7 @@ package org.example.whenwillwemeet.data.dao;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
+import org.example.whenwillwemeet.common.TimeZoneConverter;
 import org.example.whenwillwemeet.common.constant.ConstantVariables;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.Schedule;
@@ -33,7 +34,8 @@ public class AppointmentDAO {
 
     public Optional<AppointmentModel> getAppointmentModelById(String id){
         try{
-            return appointmentRepository.findById(id);
+            Optional<AppointmentModel> appointmentModel = appointmentRepository.findById(id);
+            return Optional.of(TimeZoneConverter.convertToUTC(appointmentModel.get()));
         }catch (Exception e){
             log.error("[AppointmentDAO]-[getAppointmentModelById] Appointment {} doesn't exists", id);
             return Optional.empty();
@@ -43,9 +45,11 @@ public class AppointmentDAO {
     public CommonResponse getAppointmentById(String id) {
         try{
             Optional<AppointmentModel> appointmentModel = appointmentRepository.findById(id);
-            if(appointmentModel.isPresent())
-                return new CommonResponse(true, HttpStatus.OK, "Appointment fetched", appointmentModel);
-            else
+            if(appointmentModel.isPresent()) {
+                // appointmentModel이 이미 isPresent하기 때문에 객체를 직접 넣어서 UTC로 변환
+                AppointmentModel convertedAppointment = TimeZoneConverter.convertToUTC(appointmentModel.get());
+                return new CommonResponse(true, HttpStatus.OK, "Appointment fetched", convertedAppointment);
+            }else
                 throw new RuntimeException("Appointment not found with id: " + id);
         }catch (Exception e){
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Appointment fetch failed with : [" + e + "]");

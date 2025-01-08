@@ -3,6 +3,7 @@ package org.example.whenwillwemeet.service;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
+import org.example.whenwillwemeet.common.TimeZoneConverter;
 import org.example.whenwillwemeet.data.dao.AppointmentDAO;
 import org.example.whenwillwemeet.data.dao.ScheduleDAO;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
@@ -16,6 +17,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -66,7 +69,8 @@ public class ScheduleService {
             if(!scheduleDAO.isUserExistsInAppointment(appointmentId, userName))
                 throw new RuntimeException("User [" + userName + "] not found in " + appointmentId);
 
-            AppointmentModel appointment = appointmentOpt.get();
+            // appointment를 UTC로 변환
+            AppointmentModel appointment = TimeZoneConverter.convertToUTC(appointmentOpt.get());
 
             // 입력 Schedule의 ID와 일치하는 Schedule을 찾기
             Optional<Schedule> existingScheduleOpt = appointment.getSchedules().stream()
@@ -80,16 +84,20 @@ public class ScheduleService {
 
             // 입력 Schedule의 각 TimeSlot에 대해 Toggle 작업을 수행
             for (TimeSlot inputTimeSlot : inputSchedule.getTimes()) {
-                Optional<TimeSlot> existingTimeSlotOpt = findTimeSlotByTime(existingSchedule, inputTimeSlot.getTime());
+                // TimeSlot 존재 여부를 검사할 때도 UTC를 기준으로 검사
+                Optional<TimeSlot> existingTimeSlotOpt = findTimeSlotByTime(
+                        existingSchedule,
+                        inputTimeSlot.getTime()
+                );
 
                 if (existingTimeSlotOpt.isPresent()) {
                     TimeSlot existingTimeSlot = existingTimeSlotOpt.get();
                     if (existingTimeSlot.getUsers().contains(userName)) {
                         // 사용자가 이미 존재하면 제거
-                        scheduleDAO.removeUserFromTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, appointment.getTimeZone());
+                        scheduleDAO.removeUserFromTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, "UTC");
                     } else {
                         // 사용자가 존재하지 않으면 추가
-                        scheduleDAO.addUserToTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, appointment.getTimeZone());
+                        scheduleDAO.addUserToTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, "UTC");
                     }
                 } else {
                     log.error("Schedule {}, User {} TimeSlot not found : {}", inputSchedule.getDate(), userName, inputTimeSlot.getTime());

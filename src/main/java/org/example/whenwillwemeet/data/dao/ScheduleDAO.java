@@ -50,6 +50,7 @@ public class ScheduleDAO {
     }
 
     public void addUserToTimeSlot(String appointmentId, String scheduleId, LocalDateTime time, String userName, String zoneId) {
+        log.error("" + Date.from(time.atZone(ZoneId.of(zoneId)).toInstant()));
         Query query = new Query(Criteria.where("_id").is(new ObjectId(appointmentId))
                 .and("schedules._id").is(scheduleId)
                 .and("schedules.times.time").is(Date.from(time.atZone(ZoneId.of(zoneId)).toInstant())));

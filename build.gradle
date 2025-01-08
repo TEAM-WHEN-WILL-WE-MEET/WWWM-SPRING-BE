@@ -40,6 +40,9 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	implementation 'org.springframework.boot:spring-boot-starter-validation'
+
+	// Optional 타입 처리를 위해 JacksonDatatype JDK8 Module 추가
+	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.17.2'
 }
 
 tasks.named('test') {
