@@ -50,7 +50,7 @@ public class AppointmentDAO {
             if(appointmentModel.isPresent()) {
                 // appointmentModel이 이미 isPresent하기 때문에 객체를 직접 넣어서 UTC로 변환
                 AppointmentModel convertedAppointment = TimeZoneConverter.convertToUTC(appointmentModel.get());
-                log.info("[AppointmentDAO]-[getAppointmentById] Successfully fetched aappointment [{}]", convertedAppointment.getId());
+                log.info("[AppointmentDAO]-[getAppointmentById] Successfully fetched appointment [{}]", convertedAppointment.getId());
                 return new CommonResponse(true, HttpStatus.OK, "Appointment fetched", convertedAppointment);
             }else
                 throw new RuntimeException("Appointment not found with id: " + id);
