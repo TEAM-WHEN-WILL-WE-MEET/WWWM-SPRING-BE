@@ -39,7 +39,7 @@ public class ScheduleService {
         Optional<AppointmentModel> optionalAppointment = appointmentDAO.getAppointmentModelById(appointmentId);
 
         return optionalAppointment.map(appointmentModel -> {
-            log.info("[ScheduleService]-[getSchedule] Schedule found for appointment ID: {}", appointmentId);
+            log.info("[ScheduleService]-[getSchedule] Schedule found [{}]", appointmentId);
             return new CommonResponse(true, HttpStatus.OK, "Schedule fetched", appointmentModel.getSchedules());
         }).orElse(
                 new CommonResponse(false, HttpStatus.NOT_FOUND, "Appointment not found", null)
@@ -100,14 +100,15 @@ public class ScheduleService {
                         scheduleDAO.addUserToTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, "UTC");
                     }
                 } else {
-                    log.error("Schedule {}, User {} TimeSlot not found : {}", inputSchedule.getDate(), userName, inputTimeSlot.getTime());
+                    log.error("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}] TimeSlot not found : [{}]",
+                            appointmentId, inputSchedule.getDate(), userName, inputTimeSlot.getTime());
                     throw new RuntimeException("TimeSlot not found in existing Schedule");
                 }
             }
-            log.info("Schedule {} User {} updated", inputSchedule.getDate(), userName);
+            log.info("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}]",appointmentId, inputSchedule.getDate(), userName);
             return new CommonResponse(true, HttpStatus.OK, "Schedule [" + inputSchedule.getDate() + "], User [" + userName + "] updated");
         } catch(Exception e){
-            log.error("Schedule {} update failed with : {}", inputSchedule.getDate(), e.toString());
+            log.error("[ScheduleService]-[updateSchedule] Schedule [{}] update failed with : {}", inputSchedule.getDate(), e.toString());
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Schedule [" + inputSchedule.getDate() + "] update failed with : [" + e + "]");
         }
     }

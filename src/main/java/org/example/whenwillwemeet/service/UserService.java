@@ -46,9 +46,11 @@ public class UserService {
             if (passwordEncoder.matches(user.getPassword(), existingUser.getPassword())) {
                 // 비밀번호가 일치하는 경우
                 existingUser.setPassword(null);
+                log.info("[UserService]-[login] User [{}] login succeeded [{}]", user.getName(), appointmentModel.getId());
                 return new CommonResponse(true, HttpStatus.OK, "Login success", existingUser);
             } else {
                 // 비밀번호가 불일치하는 경우
+                log.info("[UserService]-[login] User [{}] login failed (Incorrect password) [{}]", user.getName(), appointmentModel.getId());
                 return new CommonResponse(false, HttpStatus.UNAUTHORIZED, "Login failed: Incorrect password");
             }
         } else {
@@ -64,8 +66,10 @@ public class UserService {
 
             if (updateResponse.isSuccess()) {
                 newUser.setPassword(null);
+                log.info("[UserService]-[login] New User [{}] registered to [{}]", user.getName(), appointmentModel.getId());
                 return new CommonResponse(true, HttpStatus.CREATED, "New user registered", newUser);
             } else {
+                log.error("[UserService]-[login] New User [{}] registration failed to [{}]", user.getName(), appointmentModel.getId());
                 return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Failed to register new user");
             }
         }
@@ -83,8 +87,10 @@ public class UserService {
 
         // 기존 User 존재 여부 검증 및 비밀번호 검증
         if (existingUser == null) {
+            log.error("[UserService]-[updateUser] User [{}] not found in [{}]", updatedUser.getName(), appointmentModel.getId());
             return new CommonResponse(false, HttpStatus.NOT_FOUND, "User not found");
         } else if (!passwordEncoder.matches(updatedUser.getPassword(), existingUser.getPassword())) {
+            log.error("[UserService]-[updateUser] User [{}] password is incorrect [{}]", updatedUser.getName(), appointmentModel.getId());
             return new CommonResponse(false, HttpStatus.UNAUTHORIZED, "Incorrect password");
         }
 
@@ -95,8 +101,10 @@ public class UserService {
         // User 업데이트
         if (userDAO.updateUserInAppointment(appointmentModel.getId(), existingUser)) {
             existingUser.setPassword(null);
+            log.info("[UserService]-[updateUser] User [{}] information updated in [{}]", existingUser.getName(), appointmentModel.getId());
             return new CommonResponse(true, HttpStatus.OK, "User information updated successfully [" + existingUser.getName() + "]");
         } else {
+            log.error("[UserService]-[updateUser] User [{}] information update failed in [{}]", existingUser.getName(), appointmentModel.getId());
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Failed to update user information");
         }
     }

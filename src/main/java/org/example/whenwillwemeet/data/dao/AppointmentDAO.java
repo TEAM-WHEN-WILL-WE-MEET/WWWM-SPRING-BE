@@ -35,6 +35,8 @@ public class AppointmentDAO {
     public Optional<AppointmentModel> getAppointmentModelById(String id){
         try{
             Optional<AppointmentModel> appointmentModel = appointmentRepository.findById(id);
+            log.info("[AppointmentDAO]-[getAppointmentModelById] Successfully fetched appointment [{}]",
+                    appointmentModel.get().getId());
             return Optional.of(TimeZoneConverter.convertToUTC(appointmentModel.get()));
         }catch (Exception e){
             log.error("[AppointmentDAO]-[getAppointmentModelById] Appointment {} doesn't exists", id);
@@ -48,6 +50,7 @@ public class AppointmentDAO {
             if(appointmentModel.isPresent()) {
                 // appointmentModel이 이미 isPresent하기 때문에 객체를 직접 넣어서 UTC로 변환
                 AppointmentModel convertedAppointment = TimeZoneConverter.convertToUTC(appointmentModel.get());
+                log.info("[AppointmentDAO]-[getAppointmentById] Successfully fetched aappointment [{}]", convertedAppointment.getId());
                 return new CommonResponse(true, HttpStatus.OK, "Appointment fetched", convertedAppointment);
             }else
                 throw new RuntimeException("Appointment not found with id: " + id);
@@ -58,7 +61,7 @@ public class AppointmentDAO {
 
     public CommonResponse createAppointment(AppointmentModel appointment) {
         try {
-            log.info("[AppointmentDAO]-[createAppointment] Current Appointment Expiration time : {}h", ConstantVariables.APPOINTMENT_EXPIRATION_TIME);
+            log.info("[AppointmentDAO]-[createAppointment] Current Appointment Expiration time : {} days", ConstantVariables.APPOINTMENT_EXPIRATION_TIME);
 
             appointment.initializeTimes();
 
@@ -75,7 +78,7 @@ public class AppointmentDAO {
             }
 
             AppointmentModel savedAppointment = appointmentRepository.save(appointment);
-            log.info("[AppointmentDAO]-[createAppointment] Appointment [{}] created", savedAppointment.getId());
+            log.info("[AppointmentDAO]-[createAppointment] Appointment created [{}]", savedAppointment.getId());
             return new CommonResponse(true, HttpStatus.OK, "Appointment created", savedAppointment);
         } catch (Exception e) {
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Appointment creation failed with : [" + e + "]");
@@ -97,7 +100,7 @@ public class AppointmentDAO {
         try {
             if (appointmentRepository.existsById(appointment.getId())) {
                 AppointmentModel updatedAppointment = appointmentRepository.save(appointment);
-                log.info("[AppointmentDAO]-[updateAppointment] Appointment [{}] updated", updatedAppointment.getId());
+                log.info("[AppointmentDAO]-[updateAppointment] Appointment updated [{}]", updatedAppointment.getId());
                 return new CommonResponse(true, HttpStatus.OK, "Appointment updated", updatedAppointment);
             } else {
                 throw new RuntimeException("Appointment not found with id: " + appointment.getId());
@@ -118,6 +121,7 @@ public class AppointmentDAO {
 
             appointmentRepository.addUser(appointmentId, newUser);
 
+            log.info("[AppointmentDAO]-[addUserToAppointment] User [{}] added to [{}]", user.getName(), appointmentId);
             return new CommonResponse(true, HttpStatus.OK, "User added to appointment successfully");
         } catch (Exception e) {
             return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR,"Failed to add user to appointment: " + e.getMessage());

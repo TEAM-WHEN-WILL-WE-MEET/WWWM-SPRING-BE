@@ -28,8 +28,6 @@ public class ScheduleController {
 
     @GetMapping(value="/getSchedule")
     public ResponseEntity<CommonResponse> getSchedule(@RequestParam("appointmentId") String appointmentId){
-        log.info("[ScheduleController]-[getSchedule] API Called");
-
         if (appointmentId.isEmpty()) {
             log.warn("[ScheduleController]-[getSchedule] AppointmentId needed");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId needed"));
@@ -41,8 +39,6 @@ public class ScheduleController {
 
     @PutMapping(value="/updateSchedule")
     public ResponseEntity<CommonResponse> login(@Valid @RequestBody Schedule schedule){
-        log.info("[ScheduleController]-[updateSchedule] API Called");
-
         List<String> validationErrors = scheduleValidation.validateSchedule(schedule);
 
         if (!validationErrors.isEmpty()) {
@@ -56,8 +52,6 @@ public class ScheduleController {
 
     @GetMapping(value="/getUserSchedule")
     public ResponseEntity<CommonResponse> getUserSchedule(@RequestParam("appointmentId") String appointmentId, @RequestParam("userName") String userName){
-        log.info("[ScheduleController]-[getUserSchedule] API Called");
-
         if (appointmentId.isEmpty() || userName.isEmpty()) {
             log.warn("[ScheduleController]-[getUserSchedule] AppointmentId, UserName needed");
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId, UserName needed"));

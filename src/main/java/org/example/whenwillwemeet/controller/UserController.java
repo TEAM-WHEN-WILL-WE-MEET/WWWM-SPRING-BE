@@ -28,8 +28,6 @@ public class UserController {
 
     @PostMapping(value="/login")
     public ResponseEntity<CommonResponse> login(@Valid @RequestBody User user){
-        log.info("[UserController]-[login] API Called");
-
         List<String> validationErrors = userValidation.validateUser(user);
 
         if (!validationErrors.isEmpty()) {
@@ -44,8 +42,6 @@ public class UserController {
 
     @PutMapping(value="/updateUser")
     public ResponseEntity<CommonResponse> updateUser(@Valid @RequestBody User user){
-        log.info("[UserController]-[updateUser] API Called");
-
         List<String> validationErrors = userValidation.validateUser(user);
 
         if (!validationErrors.isEmpty()) {

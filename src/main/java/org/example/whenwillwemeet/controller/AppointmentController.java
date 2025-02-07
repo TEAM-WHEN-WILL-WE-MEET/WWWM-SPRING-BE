@@ -25,8 +25,6 @@ public class AppointmentController {
 
     @GetMapping(value="/getAppointment")
     public ResponseEntity<CommonResponse> getAppointment(@RequestParam("appointmentId") String appointmentId){
-        log.info("[AppointmentController]-[getAppointment] API Called");
-
         if (appointmentId.isEmpty()) {
             log.warn("[AppointmentController]-[getAppointment] AppointmentId needed");
             CommonResponse response = new CommonResponse(false, HttpStatus.BAD_REQUEST, "AppointmentId needed");
@@ -38,8 +36,6 @@ public class AppointmentController {
 
     @PostMapping(value="/createAppointment")
     public ResponseEntity<CommonResponse> createAppointment(@Valid @RequestBody AppointmentModel appointmentModel){
-        log.info("[AppointmentController]-[createAppointment] API Called");
-
         List<String> validationErrors = appointmentValidation.validateAppointmentModel(appointmentModel);
 
         if (!validationErrors.isEmpty()) {
