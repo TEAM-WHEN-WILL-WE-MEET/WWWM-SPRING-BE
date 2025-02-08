@@ -43,6 +43,10 @@ dependencies {
 
 	// Optional 타입 처리를 위해 JacksonDatatype JDK8 Module 추가
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jdk8:2.17.2'
+
+	// Prometheus 관련 의존성 추가
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'io.micrometer:micrometer-registry-prometheus'
 }
 
 tasks.named('test') {
