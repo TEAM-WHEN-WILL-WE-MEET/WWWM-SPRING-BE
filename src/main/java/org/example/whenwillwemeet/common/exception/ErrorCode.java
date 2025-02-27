@@ -20,6 +20,7 @@ public enum ErrorCode {
   FORBIDDEN_EXCEPTION(HttpStatus.FORBIDDEN, 2005, "인가되지 않는 요청입니다."),
   ALREADY_EXIST_EXCEPTION(HttpStatus.BAD_REQUEST, 2006, "이미 존재하는 리소스입니다."),
   INVALID_SORT_EXCEPTION(HttpStatus.BAD_REQUEST, 2007, "올바르지 않은 정렬 값입니다."),
+  INVALID_TOKEN_EXCEPTION(HttpStatus.BAD_REQUEST, 2008, "올바르지 않은 토큰입니다."),
 
   // 3000: User Error
   NOT_FOUND_BY_EMAIL_EXCEPTION(HttpStatus.NOT_FOUND, 3000, "해당 이메일에 대한 유저가 존재하지 않습니다."),
