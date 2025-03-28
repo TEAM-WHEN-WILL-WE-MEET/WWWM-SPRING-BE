@@ -16,6 +16,7 @@ import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
@@ -112,11 +113,15 @@ public class ScheduleService {
         }
     }
 
-    private Optional<TimeSlot> findTimeSlotByTime(Schedule schedule, LocalDateTime time) {
+    // 비교를 Instant 기준으로 정확히 일치시켜 ScheduleUpdate시 문제 방지
+    private Optional<TimeSlot> findTimeSlotByTime(Schedule schedule, LocalDateTime inputTime) {
+        Instant inputInstant = inputTime.atZone(ZoneId.of("UTC")).toInstant();
+
         return schedule.getTimes().stream()
-                .filter(ts -> ts.getTime().equals(time))
+                .filter(ts -> ts.getTime().atZone(ZoneId.of("UTC")).toInstant().equals(inputInstant))
                 .findFirst();
     }
+
 
     public CommonResponse getUserSchedule(String appointmentId, String userName) {
         return scheduleDAO.getUserSchedule(appointmentId, userName);
