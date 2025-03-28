@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.Date;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -82,22 +80,19 @@ public class ScheduleService {
 
             Schedule existingSchedule = existingScheduleOpt.get();
 
-            // 입력 Schedule의 각 TimeSlot에 대해 Toggle 작업을 수행
+            // 입력 Schedule의 TimeSlot에 대해 Toggle 작업을 수행
+            List<LocalDateTime> timesToAdd = new ArrayList<>();
+            List<LocalDateTime> timesToRemove = new ArrayList<>();
+
             for (TimeSlot inputTimeSlot : inputSchedule.getTimes()) {
-                // TimeSlot 존재 여부를 검사할 때도 UTC를 기준으로 검사
-                Optional<TimeSlot> existingTimeSlotOpt = findTimeSlotByTime(
-                        existingSchedule,
-                        inputTimeSlot.getTime()
-                );
+                Optional<TimeSlot> existingTimeSlotOpt = findTimeSlotByTime(existingSchedule, inputTimeSlot.getTime());
 
                 if (existingTimeSlotOpt.isPresent()) {
                     TimeSlot existingTimeSlot = existingTimeSlotOpt.get();
                     if (existingTimeSlot.getUsers().contains(userName)) {
-                        // 사용자가 이미 존재하면 제거
-                        scheduleDAO.removeUserFromTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, "UTC");
+                        timesToRemove.add(inputTimeSlot.getTime());
                     } else {
-                        // 사용자가 존재하지 않으면 추가
-                        scheduleDAO.addUserToTimeSlot(appointmentId, existingSchedule.getId(), inputTimeSlot.getTime(), userName, "UTC");
+                        timesToAdd.add(inputTimeSlot.getTime());
                     }
                 } else {
                     log.error("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}] TimeSlot not found : [{}]",
@@ -105,7 +100,11 @@ public class ScheduleService {
                     throw new RuntimeException("TimeSlot not found in existing Schedule");
                 }
             }
-            log.info("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}]",appointmentId, inputSchedule.getDate(), userName);
+
+            scheduleDAO.updateUserInTimeSlotsBulk(appointmentId, existingSchedule.getId(), timesToAdd, timesToRemove, userName, "UTC");
+            log.info("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}] TimeSlot updated [{}] added, [{}] removed",
+                    appointmentId, inputSchedule.getDate(), userName, timesToAdd.size(), timesToRemove.size());
+
             return new CommonResponse(true, HttpStatus.OK, "Schedule [" + inputSchedule.getDate() + "], User [" + userName + "] updated");
         } catch(Exception e){
             log.error("[ScheduleService]-[updateSchedule] Schedule [{}] update failed with : {}", inputSchedule.getDate(), e.toString());
