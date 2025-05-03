@@ -5,8 +5,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
-import org.example.whenwillwemeet.common.exception.ApplicationException;
-import org.example.whenwillwemeet.common.exception.ErrorCode;
 import org.example.whenwillwemeet.data.model.User;
 import org.example.whenwillwemeet.data.model.UserModel;
 import org.example.whenwillwemeet.data.repository.UserRepository;
@@ -16,10 +14,10 @@ import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.util.Date;
-
+/**
+ * 사용자 관련 데이터 액세스 객체 (DAO)
+ * - MongoDB를 통해 사용자 정보를 저장, 조회, 업데이트
+ */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -36,6 +34,14 @@ public class UserDAO {
     return userRepository.findByEmail(email);
   }
 
+  public Optional<UserModel> findById(ObjectId id) {
+    return userRepository.findById(id);
+  }
+
+  /**
+   * @deprecated 이 메서드는 v2 API 에서 제거될 예정입니다.
+   */
+  @Deprecated
   public boolean updateUserInAppointment(String appointmentId, User user) {
     try {
       Query query = new Query(Criteria.where("_id").is(appointmentId)

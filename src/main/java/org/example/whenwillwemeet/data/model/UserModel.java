@@ -2,6 +2,7 @@ package org.example.whenwillwemeet.data.model;
 
 import jakarta.persistence.Id;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +28,7 @@ public class UserModel {
   @CreatedDate
   private LocalDateTime createdAt;
   @DBRef
-  private List<AppointmentModel> appointments;
+  private List<AppointmentModel> appointments = new ArrayList<>();
 
   public static UserModel create(String name, String email, String password) {
     return UserModel.builder()
@@ -36,6 +37,31 @@ public class UserModel {
         .email(email)
         .password(password)
         .build();
+  }
+
+  public void addAppointment(AppointmentModel appointmentModel) {
+    this.appointments.add(appointmentModel);
+  }
+
+  public void patchName(String name) {
+    if (name.isBlank()) {
+      return;
+    }
+    this.name = name;
+  }
+
+  public void patchEmail(String email) {
+    if (email.isBlank()) {
+      return;
+    }
+    this.email = email;
+  }
+
+  public void patchPassword(String encodedPassword) {
+    if (encodedPassword.isBlank()) {
+      return;
+    }
+    this.password = encodedPassword;
   }
 
 }
