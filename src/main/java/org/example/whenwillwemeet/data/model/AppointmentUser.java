@@ -14,4 +14,13 @@ public class AppointmentUser {
   private ObjectId id;
   private String name;
   private String email;
+
+  public static AppointmentUser of(UserModel userModel) {
+    return new AppointmentUser(userModel.getId(), userModel.getName(), userModel.getEmail());
+  }
+
+  public void patchData(UserModel userModel) {
+    this.name = userModel.getName();
+    this.email = userModel.getEmail();
+  }
 }

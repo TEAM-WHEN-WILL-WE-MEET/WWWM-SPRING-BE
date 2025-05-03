@@ -1,5 +1,6 @@
 package org.example.whenwillwemeet.data.model;
 
+import java.util.ArrayList;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -12,7 +13,6 @@ import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.List;
 
@@ -34,9 +34,9 @@ public class AppointmentModel {
     private String name;
 
     // @DBRef
-    private List<Schedule> schedules;
+    private List<Schedule> schedules = new ArrayList<>();
     // @DBRef
-    private List<User> users;
+    private List<AppointmentUser> users= new ArrayList<>();
 
     private LocalDateTime startTime;
     private LocalDateTime endTime;
@@ -52,5 +52,9 @@ public class AppointmentModel {
 
         this.createdAt = nowInAppointmentZone.withZoneSameInstant(ZoneId.of(this.timeZone)).toLocalDateTime();
         this.expireAt = nowInAppointmentZone.plusDays(ConstantVariables.APPOINTMENT_EXPIRATION_TIME).toLocalDateTime();
+    }
+
+    public void addAppointmentUser(AppointmentUser appointmentUser) {
+        users.add(appointmentUser);
     }
 }
