@@ -24,9 +24,11 @@ public enum ErrorCode {
 
   // 3000: User Error
   NOT_FOUND_BY_EMAIL_EXCEPTION(HttpStatus.NOT_FOUND, 3000, "해당 이메일에 대한 유저가 존재하지 않습니다."),
-  INVALID_PASSWORD_EXCEPTION(HttpStatus.BAD_REQUEST, 3000, "비밀번호가 일치하지 않습니다.");
+  INVALID_PASSWORD_EXCEPTION(HttpStatus.BAD_REQUEST, 3001, "비밀번호가 일치하지 않습니다."),
+  USER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 3002, "존재하지 않는 유저입니다."),
 
-
+  // 4000 Appointment Error
+  APPOINTMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 4000, "약속을 찾을 수 없습니다.");
   private final HttpStatus httpStatus;
   private final Integer code;
   private final String message;
