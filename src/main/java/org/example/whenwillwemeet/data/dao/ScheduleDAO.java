@@ -1,6 +1,9 @@
 package org.example.whenwillwemeet.data.dao;
 
 
+import com.mongodb.client.model.UpdateOneModel;
+import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.WriteModel;
 import org.bson.types.ObjectId;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
@@ -10,7 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
+import org.bson.Document;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -18,10 +21,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Component
@@ -47,31 +47,49 @@ public class ScheduleDAO {
         return exists;
     }
 
-    public void addUserToTimeSlot(String appointmentId, String scheduleId, LocalDateTime time, String userName, String zoneId) {
-        log.error("" + Date.from(time.atZone(ZoneId.of(zoneId)).toInstant()));
-        Query query = new Query(Criteria.where("_id").is(new ObjectId(appointmentId))
-                .and("schedules._id").is(scheduleId)
-                .and("schedules.times.time").is(Date.from(time.atZone(ZoneId.of(zoneId)).toInstant())));
+    // MongoDB Driver의 Document를 직접 활용
+    public void updateUserInTimeSlotsBulk(String appointmentId, String scheduleId, List<LocalDateTime> timesToAdd, List<LocalDateTime> timesToRemove, String userName, String zoneId) {
+        List<WriteModel<Document>> bulkOperations = new ArrayList<>();
 
-        Update update = new Update().addToSet("schedules.$[sched].times.$[slot].users", userName);
+        for (LocalDateTime time : timesToAdd) {
+            Document query = new Document("_id", new ObjectId(appointmentId))
+                    .append("schedules._id", scheduleId)
+                    .append("schedules.times.time", Date.from(time.atZone(ZoneId.of(zoneId)).toInstant()));
 
-        update.filterArray(Criteria.where("sched._id").is(scheduleId));
-        update.filterArray(Criteria.where("slot.time").is(Date.from(time.atZone(ZoneId.of(zoneId)).toInstant())));
+            Document update = new Document("$addToSet",
+                    new Document("schedules.$[sched].times.$[slot].users", userName));
 
-        mongoTemplate.updateFirst(query, update, "appointments");
-    }
+            UpdateOptions updateOptions = new UpdateOptions().arrayFilters(
+                    Arrays.asList(
+                            new Document("sched._id", scheduleId),
+                            new Document("slot.time", Date.from(time.atZone(ZoneId.of(zoneId)).toInstant()))
+                    )
+            );
 
-    public void removeUserFromTimeSlot(String appointmentId, String scheduleId, LocalDateTime time, String userName, String zoneId) {
-        Query query = new Query(Criteria.where("_id").is(new ObjectId(appointmentId))
-                .and("schedules._id").is(scheduleId)
-                .and("schedules.times.time").is(Date.from(time.atZone(ZoneId.of(zoneId)).toInstant())));
+            bulkOperations.add(new UpdateOneModel<>(query, update, updateOptions));
+        }
 
-        Update update = new Update().pull("schedules.$[sched].times.$[slot].users", userName);
+        for (LocalDateTime time : timesToRemove) {
+            Document query = new Document("_id", new ObjectId(appointmentId))
+                    .append("schedules._id", scheduleId)
+                    .append("schedules.times.time", Date.from(time.atZone(ZoneId.of(zoneId)).toInstant()));
 
-        update.filterArray(Criteria.where("sched._id").is(scheduleId));
-        update.filterArray(Criteria.where("slot.time").is(Date.from(time.atZone(ZoneId.of(zoneId)).toInstant())));
+            Document update = new Document("$pull",
+                    new Document("schedules.$[sched].times.$[slot].users", userName));
 
-        mongoTemplate.updateFirst(query, update, "appointments");
+            UpdateOptions updateOptions = new UpdateOptions().arrayFilters(
+                    Arrays.asList(
+                            new Document("sched._id", scheduleId),
+                            new Document("slot.time", Date.from(time.atZone(ZoneId.of(zoneId)).toInstant()))
+                    )
+            );
+
+            bulkOperations.add(new UpdateOneModel<>(query, update, updateOptions));
+        }
+
+        if (!bulkOperations.isEmpty()) {
+            mongoTemplate.getCollection("appointments").bulkWrite(bulkOperations);
+        }
     }
 
     public CommonResponse getUserSchedule(String appointmentId, String userName) {
