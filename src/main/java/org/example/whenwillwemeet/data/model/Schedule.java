@@ -1,5 +1,6 @@
 package org.example.whenwillwemeet.data.model;
 
+import java.util.ArrayList;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
@@ -14,7 +15,7 @@ public class Schedule {
     @Id
     private String id;
     private LocalDateTime date;
-    private List<TimeSlot> times;
+    private List<TimeSlot> times = new ArrayList<>();
     private String appointmentId;
 }
 
