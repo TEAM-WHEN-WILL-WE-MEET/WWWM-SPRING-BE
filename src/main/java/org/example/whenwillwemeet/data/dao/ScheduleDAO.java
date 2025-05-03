@@ -1,13 +1,11 @@
 package org.example.whenwillwemeet.data.dao;
 
 
-import com.mongodb.client.result.UpdateResult;
 import org.bson.types.ObjectId;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.data.model.AppointmentModel;
 import org.example.whenwillwemeet.data.model.Schedule;
 import org.example.whenwillwemeet.data.model.TimeSlot;
-import org.example.whenwillwemeet.data.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
