@@ -6,7 +6,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,21 +17,22 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 @RequiredArgsConstructor
+@Component
 @Slf4j
 public class JwtFilter extends OncePerRequestFilter {
 
   private final JwtUtils jwtUtils;
-  private final List<String> publicURLs = List.of("/api/v1/user/login", "/api/v2/user/signup", "/api/v2/user/login");
+  private final List<String> publicURLs = List.of("/api/v2/users/auth/signup", "/api/v2/users/auth/login", "/");
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
       FilterChain filterChain) throws ServletException, IOException {
     String uri = request.getRequestURI();
-    String method = request.getMethod();
 
     if (publicURLs.stream()
         .anyMatch(f -> f.equals(uri))) {
@@ -47,7 +47,7 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     Claims claim = jwtUtils.getUserInfoFromToken(tokenValue);
-    setUserIdToSecurityContextHolder((ObjectId) claim.get(JwtUtils.ID_KEY));
+    setUserIdToSecurityContextHolder(new ObjectId(claim.get(JwtUtils.ID_KEY).toString()));
 
     filterChain.doFilter(request, response);
   }

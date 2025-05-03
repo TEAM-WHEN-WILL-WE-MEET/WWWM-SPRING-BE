@@ -46,7 +46,7 @@ public class JwtUtils {
     return BEARER_PREFIX +
         Jwts.builder()
             .setSubject(userId.toString()) // 사용자 식별자값(ID)
-            .claim(ID_KEY, userId)
+            .claim(ID_KEY, userId.toHexString())
             .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
             .setIssuedAt(date) // 발급일
             .signWith(key, signatureAlgorithm) // 암호화 알고리즘
