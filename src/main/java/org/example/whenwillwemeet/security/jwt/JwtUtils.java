@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -41,12 +42,12 @@ public class JwtUtils {
     key = Keys.hmacShaKeyFor(bytes);
   }
 
-  public String createToken(ObjectId userId) {
+  public String createToken(UUID userId) {
     Date date = new Date();
     return BEARER_PREFIX +
         Jwts.builder()
             .setSubject(userId.toString()) // 사용자 식별자값(ID)
-            .claim(ID_KEY, userId.toHexString())
+            .claim(ID_KEY, userId.toString())
             .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
             .setIssuedAt(date) // 발급일
             .signWith(key, signatureAlgorithm) // 암호화 알고리즘

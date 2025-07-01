@@ -7,6 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -47,12 +48,12 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     Claims claim = jwtUtils.getUserInfoFromToken(tokenValue);
-    setUserIdToSecurityContextHolder(new ObjectId(claim.get(JwtUtils.ID_KEY).toString()));
+    setUserIdToSecurityContextHolder(UUID.fromString(claim.get(JwtUtils.ID_KEY).toString()));
 
     filterChain.doFilter(request, response);
   }
 
-  public void setUserIdToSecurityContextHolder(ObjectId userId) {
+  public void setUserIdToSecurityContextHolder(UUID userId) {
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     UserDetails userDetails = new UserDetailsImpl(userId);
     context.setAuthentication(

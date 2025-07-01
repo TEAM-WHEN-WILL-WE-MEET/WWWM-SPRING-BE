@@ -8,6 +8,7 @@ import org.example.whenwillwemeet.data.dao.UserDAO;
 import org.example.whenwillwemeet.data.dto.UserLoginDto;
 import org.example.whenwillwemeet.data.dto.UserSignupDto;
 import org.example.whenwillwemeet.data.model.UserModel;
+import org.example.whenwillwemeet.domain.entity.User;
 import org.example.whenwillwemeet.security.jwt.JwtUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,7 +36,7 @@ public class UserAuthService {
    */
   public CommonResponse login(UserLoginDto userLoginDto) {
     // 1. 이메일로 사용자 조회
-    UserModel byEmail = userDAO.findByEmail(userLoginDto.email())
+    User byEmail = userDAO.findByEmail(userLoginDto.email())
         .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_BY_EMAIL_EXCEPTION));
 
     // 2. 비밀번호 일치 여부 검증
@@ -63,7 +64,7 @@ public class UserAuthService {
     }
 
     // 2. 사용자 모델 생성 후 저장 (비밀번호는 인코딩)
-    userDAO.save(UserModel.create(userSignupDto.name(), userSignupDto.email(),
+    userDAO.save(User.create(userSignupDto.name(), userSignupDto.email(),
         passwordEncoder.encode(userSignupDto.password())));
 
     // 3. 성공 응답 반환

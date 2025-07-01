@@ -2,6 +2,7 @@ package org.example.whenwillwemeet.data.dto;
 
 import lombok.Builder;
 import org.example.whenwillwemeet.data.model.UserModel;
+import org.example.whenwillwemeet.domain.entity.User;
 
 @Builder
 public record UserInfoDto(
@@ -9,11 +10,11 @@ public record UserInfoDto(
     String name,
     String email
 ) {
-  public static UserInfoDto of(UserModel userModel) {
+  public static UserInfoDto of(User user) {
     return UserInfoDto.builder()
-        .userId(userModel.getId().toString())
-        .name(userModel.getName())
-        .email(userModel.getEmail())
+        .userId(user.getId().toString())
+        .name(user.getName())
+        .email(user.getEmail())
         .build();
   }
 }

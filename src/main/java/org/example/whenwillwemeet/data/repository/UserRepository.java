@@ -1,10 +1,10 @@
 package org.example.whenwillwemeet.data.repository;
 
 import java.util.Optional;
-import org.bson.types.ObjectId;
-import org.example.whenwillwemeet.data.model.UserModel;
-import org.springframework.data.mongodb.repository.MongoRepository;
+import java.util.UUID;
+import org.example.whenwillwemeet.domain.entity.User;
+import org.springframework.data.jpa.repository.JpaRepository;
 
-public interface UserRepository extends MongoRepository<UserModel, ObjectId> {
-    Optional<UserModel> findByEmail(String email);
+public interface UserRepository extends JpaRepository<User, UUID> {
+    Optional<User> findByEmail(String email);
 }
