@@ -2,7 +2,7 @@ name: Spring Boot CI with Gradle
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main", "v1" ]
 
 permissions:
   contents: read
@@ -56,7 +56,10 @@ jobs:
           # Dockerfile이 위치한 디렉토리를 지정
           context: .
           push: true
-          tags: judemin/wwwm-spring-be:latest
+          # 현재 브랜치명에 대한 태그 추가
+          tags: |
+            judemin/wwwm-spring-be:latest
+            judemin/wwwm-spring-be:${{ github.ref_name }}
           # GitHub Action Cache
           cache-from: type=gha
           cache-to: type=gha,mode=max
