@@ -19,13 +19,13 @@ public class AppointmentScheduleController {
 
   private final ScheduleService scheduleService;
 
-  @GetMapping("/")
+  @GetMapping("")
   public ResponseEntity<CommonResponse> getScheduleByAppointment(@PathVariable UUID appointmentId) {
     CommonResponse response = scheduleService.getSchedule(appointmentId);
     return ResponseEntity.status(response.getStatus()).body(response);
   }
 
-  @PatchMapping("/")
+  @PatchMapping("")
   public ResponseEntity<CommonResponse> updateUserTimeSlots(
       @PathVariable UUID appointmentId,
       @Valid @RequestBody ScheduleUpdateDto schedule,
