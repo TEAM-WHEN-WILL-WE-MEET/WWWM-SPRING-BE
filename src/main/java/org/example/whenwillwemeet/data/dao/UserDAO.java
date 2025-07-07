@@ -4,7 +4,7 @@ import java.util.Optional;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.example.whenwillwemeet.data.repository.UserRepository;
+import org.example.whenwillwemeet.repository.UserRepository;
 import org.example.whenwillwemeet.domain.entity.User;
 import org.springframework.stereotype.Component;
 
