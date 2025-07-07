@@ -25,13 +25,21 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class JwtUtils {
 
-  public static final String AUTHORIZATION_HEADER = "Authorization";
-  public static final String ID_KEY = "id";
-  private final String BEARER_PREFIX = "Bearer ";
-  private final long TOKEN_TIME = 3600000;
+  @Value("${jwt.utils.authorization-header}")
+  public static String AUTHORIZATION_HEADER;
+
+  @Value("${jwt.utils.id-key}")
+  public static String ID_KEY;
+
+  @Value("${jwt.utils.bearer-prefix}")
+  private String BEARER_PREFIX;
+
+  @Value("${jwt.utils.token-time}")
+  private long TOKEN_TIME;
 
   @Value("${jwt.secret.key}") // Base64 Encode 한 SecretKey
   private String secretKey;
+
   private Key key;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
