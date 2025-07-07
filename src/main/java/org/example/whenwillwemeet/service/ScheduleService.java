@@ -1,129 +1,153 @@
 package org.example.whenwillwemeet.service;
 
-import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
-import org.example.whenwillwemeet.common.TimeZoneConverter;
-import org.example.whenwillwemeet.data.dao.AppointmentDAO;
-import org.example.whenwillwemeet.data.dao.ScheduleDAO;
-import org.example.whenwillwemeet.data.model.AppointmentModel;
-import org.example.whenwillwemeet.data.model.Schedule;
-import org.example.whenwillwemeet.data.model.TimeSlot;
-import org.example.whenwillwemeet.data.repository.AppointmentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
+import org.example.whenwillwemeet.common.exception.ApplicationException;
+import org.example.whenwillwemeet.common.exception.ErrorCode;
+import org.example.whenwillwemeet.converter.ScheduleConverter;
+import org.example.whenwillwemeet.data.dao.UserDAO;
+import org.example.whenwillwemeet.data.dto.AppointmentGetDto.ScheduleGetDto;
+import org.example.whenwillwemeet.data.dto.ScheduleUpdateDto;
+import org.example.whenwillwemeet.repository.AppointmentRepository;
+import org.example.whenwillwemeet.repository.ScheduleRepository;
+import org.example.whenwillwemeet.repository.UserRepository;
+import org.example.whenwillwemeet.domain.entity.Appointment;
+import org.example.whenwillwemeet.domain.entity.Schedule;
+import org.example.whenwillwemeet.domain.entity.User;
+import org.example.whenwillwemeet.domain.entity.UserTimeSlot;
+import org.example.whenwillwemeet.repository.UserTimeSlotRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.*;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class ScheduleService {
 
-    @Autowired
-    private AppointmentRepository appointmentRepository;
+  private final UserDAO userDAO;
+  private final AppointmentRepository appointmentRepository;
+  private final ScheduleRepository scheduleRepository;
+  private final UserTimeSlotRepository userTimeSlotRepository;
+  private final UserRepository userRepository;
 
-    @Autowired
-    private ScheduleDAO scheduleDAO;
+  @Transactional(readOnly = true)
+  public CommonResponse getSchedule(UUID appointmentId) {
+    // 1. 약속 조회
+    Appointment appointment = appointmentRepository.findWithSchedulesById(appointmentId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.APPOINTMENT_NOT_FOUND_EXCEPTION));
+    
+    // 2. 스케쥴 DTO로 변환
+    List<ScheduleGetDto> result = appointment.getSchedules().stream()
+        .map(ScheduleConverter::toScheduleGetDto)
+        .toList();
+    return new CommonResponse(true, HttpStatus.OK, "Schedule fetched", result);
+  }
 
-    @Autowired
-    private AppointmentDAO appointmentDAO;
+  @Transactional(readOnly = true)
+  public CommonResponse getUserSchedule(UUID appointmentId, UUID userId) {
+    // 1. User 조회
+    User user = userRepository.getReferenceById(userId);
+    // 2. 스케쥴 조회 (유저가 참여한 스케쥴만)
+    List<Schedule> schedules = scheduleRepository.findWithTimeSlotByAppointmentIdAndUser(appointmentId, user);
+    List<ScheduleGetDto> result = schedules.stream()
+        .map(ScheduleConverter::toScheduleGetDto)
+        .toList();
 
-    public CommonResponse getSchedule(String appointmentId) {
-        Optional<AppointmentModel> optionalAppointment = appointmentDAO.getAppointmentModelById(appointmentId);
+    return new CommonResponse(true, HttpStatus.OK, "User [" + userId + "] schedule fetched", result);
+  }
 
-        return optionalAppointment.map(appointmentModel -> {
-            log.info("[ScheduleService]-[getSchedule] Schedule found [{}]", appointmentId);
-            return new CommonResponse(true, HttpStatus.OK, "Schedule fetched", appointmentModel.getSchedules());
-        }).orElse(
-                new CommonResponse(false, HttpStatus.NOT_FOUND, "Appointment not found", null)
-        );
-    }
+  @Transactional
+  public CommonResponse updateUserTimeSlots(UUID appointmentId, ScheduleUpdateDto dto, UUID loginUserId) {
+    // 1. User 조회
+    User loginUser = userDAO.findById(loginUserId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
 
-    // 주어진 Schedule 정보를 기반으로 현재 Appointment 모델과 비교하여 사용자를 TimeSlot에 추가하거나 제거
-    // 즉, Frontend에서 발생한 이벤트를 전달해주면 자동으로 현재 DB의 데이터와 비교하여 Toggle
-    @Transactional
-    public CommonResponse updateSchedule(Schedule inputSchedule) {
-        try {
-            String appointmentId = inputSchedule.getAppointmentId();
+    // 2. Schedule 조회
+    // -> 조회 시 TimeSlot을 조인하여 가져옴. 그 중 dto에서 받은 시간 범위에 해당하는 TimeSlot만 가져옴
+    Schedule targetSchedule = scheduleRepository.findWithTimeSlotByIdAndTimesIn(
+        dto.getScheduleId(),
+        dto.getTimes()
+    ).orElseThrow(() -> new ApplicationException(ErrorCode.SCHEDULE_NOT_FOUND_EXCEPTION));
 
-            // 현재 Appointment 정보를 데이터베이스에서 fetch
-            Optional<AppointmentModel> appointmentOpt = appointmentRepository.findById(appointmentId);
+    // 3. 조회된 UserTimeSlot 중 user가 참여한 UserTimeSlot 삭제
+    List<UserTimeSlot> deleteUserTimeSlot = targetSchedule.getTimeSlots().stream()
+        .flatMap(slot -> slot.getUsers().stream())
+        .filter(user -> user.getUser().getId().equals(loginUser.getId()))
+        .toList();
 
-            if (!appointmentOpt.isPresent())
-                throw new RuntimeException("Appointment not found with id: " + appointmentId);
+    // 4. UserTimeSlot이 조회되지 않았으면 유저가 참여하지 않은 시간대이므로 추가
+    List<UserTimeSlot> insertTimeSlots = targetSchedule.getTimeSlots().stream()
+        .filter(slot -> slot.getUsers().stream().noneMatch(uts -> uts.getUser().getId().equals(loginUser.getId())))
+        .map(slot-> slot.addUser(loginUser))
+        .toList();
 
-            // InputSchedule의 TimeSlot의 User들이 상이하면 Throw Exception
-            String userName = inputSchedule.getTimes().getFirst().getUsers().getFirst();
-            for (TimeSlot inputTimeSlot : inputSchedule.getTimes())
-                if(!Objects.equals(userName, inputTimeSlot.getUsers().getFirst()))
-                    throw new RuntimeException("Different UserName Exists");
+    userTimeSlotRepository.deleteAll(deleteUserTimeSlot);
+    userTimeSlotRepository.saveAll(insertTimeSlots);
 
-            // User가 존재하지 않으면 Throw Exception
-            if(!scheduleDAO.isUserExistsInAppointment(appointmentId, userName))
-                throw new RuntimeException("User [" + userName + "] not found in " + appointmentId);
-
-            // appointment를 UTC로 변환
-            AppointmentModel appointment = TimeZoneConverter.convertToUTC(appointmentOpt.get());
-
-            // 입력 Schedule의 ID와 일치하는 Schedule을 찾기
-            Optional<Schedule> existingScheduleOpt = appointment.getSchedules().stream()
-                    .filter(s -> s.getId().equals(inputSchedule.getId()))
-                    .findFirst();
-
-            if (!existingScheduleOpt.isPresent())
-                throw new RuntimeException("Schedule not found in Appointment");
-
-            Schedule existingSchedule = existingScheduleOpt.get();
-
-            // 입력 Schedule의 TimeSlot에 대해 Toggle 작업을 수행
-            List<LocalDateTime> timesToAdd = new ArrayList<>();
-            List<LocalDateTime> timesToRemove = new ArrayList<>();
-
-            for (TimeSlot inputTimeSlot : inputSchedule.getTimes()) {
-                Optional<TimeSlot> existingTimeSlotOpt = findTimeSlotByTime(existingSchedule, inputTimeSlot.getTime());
-
-                if (existingTimeSlotOpt.isPresent()) {
-                    TimeSlot existingTimeSlot = existingTimeSlotOpt.get();
-                    if (existingTimeSlot.getUsers().contains(userName)) {
-                        timesToRemove.add(inputTimeSlot.getTime());
-                    } else {
-                        timesToAdd.add(inputTimeSlot.getTime());
-                    }
-                } else {
-                    log.error("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}] TimeSlot not found : [{}]",
-                            appointmentId, inputSchedule.getDate(), userName, inputTimeSlot.getTime());
-                    throw new RuntimeException("TimeSlot not found in existing Schedule");
-                }
-            }
-
-            scheduleDAO.updateUserInTimeSlotsBulk(appointmentId, existingSchedule.getId(), timesToAdd, timesToRemove, userName, "UTC");
-            log.info("[ScheduleService]-[updateSchedule] Appointment [{}] Schedule [{}], User [{}] TimeSlot updated [{}] added, [{}] removed",
-                    appointmentId, inputSchedule.getDate(), userName, timesToAdd.size(), timesToRemove.size());
-
-            return new CommonResponse(true, HttpStatus.OK, "Schedule [" + inputSchedule.getDate() + "], User [" + userName + "] updated");
-        } catch(Exception e){
-            log.error("[ScheduleService]-[updateSchedule] Schedule [{}] update failed with : {}", inputSchedule.getDate(), e.toString());
-            return new CommonResponse(false, HttpStatus.INTERNAL_SERVER_ERROR, "Schedule [" + inputSchedule.getDate() + "] update failed with : [" + e + "]");
-        }
-    }
-
-    // 비교를 Instant 기준으로 정확히 일치시켜 ScheduleUpdate시 문제 방지
-    private Optional<TimeSlot> findTimeSlotByTime(Schedule schedule, LocalDateTime inputTime) {
-        Instant inputInstant = inputTime.atZone(ZoneId.of("UTC")).toInstant();
-
-        return schedule.getTimes().stream()
-                .filter(ts -> ts.getTime().atZone(ZoneId.of("UTC")).toInstant().equals(inputInstant))
-                .findFirst();
-    }
+    return new CommonResponse(true, HttpStatus.OK,
+        "Schedule [" + dto.getScheduleId() + "], User [" + loginUser.getId()
+            + "] updated");
+  }
 
 
-    public CommonResponse getUserSchedule(String appointmentId, String userName) {
-        return scheduleDAO.getUserSchedule(appointmentId, userName);
-    }
+  /*
+  // 주어진 Schedule 정보를 기반으로 현재 Appointment 모델과 비교하여 사용자를 TimeSlot에 추가하거나 제거
+  // 즉, Frontend에서 발생한 이벤트를 전달해주면 자동으로 현재 DB의 데이터와 비교하여 Toggle
+  @Transactional
+  @Deprecated
+  public CommonResponse updateSchedule(ScheduleUpdateDto dto, UUID loginUserId) {
+    // 1. User, Schedule 조회
+    User loginUser = userDAO.findById(loginUserId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+    Schedule targetSchedule = scheduleRepository.findById(dto.getScheduleId())
+        .orElseThrow(() -> new ApplicationException(ErrorCode.SCHEDULE_NOT_FOUND_EXCEPTION));
+
+    List<LocalDateTime> requestedTimes = dto.getTimes();
+
+    // 2. 해당 스케줄의 TimeSlot 중 요청된 시간에 해당하는 것만 조회
+    List<TimeSlot> relevantTimeSlots = timeSlotRepository.findByScheduleAndTimeIn(targetSchedule,
+        requestedTimes);
+
+    // 3. 현재 유저가 이미 참여한 UserTimeSlot 조회
+    List<UserTimeSlot> userJoinedSlots = userTimeSlotRepository.findByUserAndTimeSlotIn(loginUser,
+        relevantTimeSlots);
+
+    // 4. 유저가 이미 참여한 시간 추출
+    Set<LocalDateTime> joinedTimes = userJoinedSlots.stream()
+        .map(fus -> {
+          return fus.getTimeSlot().getTime();
+        })
+        .collect(Collectors.toSet());
+
+    // 5. 아직 참여하지 않은 시간 필터링
+    List<TimeSlot> newJoinTargets = relevantTimeSlots.stream()
+        .filter(slot -> !joinedTimes.contains(slot.getTime()))
+        .collect(Collectors.toList());
+
+    // 6. 새로 참여할 UserTimeSlot 생성
+    List<UserTimeSlot> userSlotsToInsert = newJoinTargets.stream()
+        .map(slot -> {
+          UserTimeSlot uts = UserTimeSlot.builder()
+              .user(loginUser)
+              .timeSlot(slot)
+              .build();
+          uts.applyRelationships(loginUser, slot); // 양방향 연관
+          return uts;
+        })
+        .toList();
+
+    userTimeSlotRepository.saveAll(userSlotsToInsert);
+    userTimeSlotRepository.deleteAll(userJoinedSlots);
+
+    return new CommonResponse(true, HttpStatus.OK,
+        "Schedule [" + dto.getScheduleId() + "], User [" + loginUser.getId()
+            + "] updated");
+  }
+
+   */
+
 }
