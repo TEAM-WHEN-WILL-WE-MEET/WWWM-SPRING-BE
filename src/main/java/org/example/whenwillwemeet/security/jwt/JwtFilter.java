@@ -50,7 +50,7 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     Claims claim = jwtUtils.getUserInfoFromToken(tokenValue);
-    setUserIdToSecurityContextHolder(UUID.fromString(claim.get(JwtUtils.ID_KEY).toString()));
+    setUserIdToSecurityContextHolder(UUID.fromString(claim.get(jwtUtils.ID_KEY).toString()));
 
     filterChain.doFilter(request, response);
   }

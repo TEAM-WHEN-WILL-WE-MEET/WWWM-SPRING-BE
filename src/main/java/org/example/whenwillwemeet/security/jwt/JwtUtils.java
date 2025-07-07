@@ -26,10 +26,10 @@ import org.springframework.util.StringUtils;
 public class JwtUtils {
 
   @Value("${jwt.utils.authorization-header}")
-  public static String AUTHORIZATION_HEADER;
+  public String AUTHORIZATION_HEADER;
 
   @Value("${jwt.utils.id-key}")
-  public static String ID_KEY;
+  public String ID_KEY;
 
   @Value("${jwt.utils.bearer-prefix}")
   private String BEARER_PREFIX;
