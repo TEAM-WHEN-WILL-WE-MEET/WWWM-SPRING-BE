@@ -13,6 +13,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.CreatedDate;
 
 @Entity
 @Table(name = "user")
@@ -24,7 +25,7 @@ public class User {
 
   @Id
   @GeneratedValue(strategy = GenerationType.UUID)
-  @Column(columnDefinition = "CHAR(36)")
+  @Column(columnDefinition = "BINARY(16)")
   private UUID id;
 
   @Column(nullable = false, unique = true)
@@ -36,6 +37,7 @@ public class User {
   @Column(nullable = false)
   private String password;
 
+  @CreatedDate
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
 

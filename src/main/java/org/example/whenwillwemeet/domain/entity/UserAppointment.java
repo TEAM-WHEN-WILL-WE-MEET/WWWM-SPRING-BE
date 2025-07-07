@@ -1,6 +1,7 @@
 package org.example.whenwillwemeet.domain.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -10,10 +11,12 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user_appointment", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "appointment_id"}))
+@Getter
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
@@ -23,11 +26,11 @@ public class UserAppointment {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
 
-  @ManyToOne
+  @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "appointment_id", nullable = false)
   private Appointment appointment;
 }

@@ -10,11 +10,13 @@ import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "user_time_slot", uniqueConstraints = @UniqueConstraint(columnNames = {"user_id", "time_slot_id"}))
 @Builder
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserTimeSlot {
