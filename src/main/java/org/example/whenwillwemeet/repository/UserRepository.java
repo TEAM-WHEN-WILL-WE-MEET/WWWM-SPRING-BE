@@ -1,4 +1,4 @@
-package org.example.whenwillwemeet.data.repository;
+package org.example.whenwillwemeet.repository;
 
 import java.util.Optional;
 import java.util.UUID;
