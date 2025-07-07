@@ -9,7 +9,7 @@ import org.springframework.core.env.Environment;
 @Slf4j
 @Configuration
 @RequiredArgsConstructor
-@PropertySource("classpath:application-private.properties")
+@PropertySource("classpath:application-private.yml")
 public class ConfigUtil {
     private final Environment environment;
 

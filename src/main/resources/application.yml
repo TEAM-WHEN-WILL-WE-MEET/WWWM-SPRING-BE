@@ -1,0 +1,12 @@
+# Application Configuration
+spring:
+  application:
+    name: WHEN-WILL-WE-MEET
+
+  # Profile Configuration
+  profiles:
+    include: private
+
+  # Date & Time Configuration
+  jackson:
+    time-zone: Asia/Seoul
