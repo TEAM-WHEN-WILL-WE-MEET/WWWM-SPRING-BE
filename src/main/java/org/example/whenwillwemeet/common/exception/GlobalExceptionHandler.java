@@ -1,5 +1,6 @@
 package org.example.whenwillwemeet.common.exception;
 
+import java.util.Arrays;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
@@ -15,6 +16,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(ApplicationException.class)
   protected ResponseEntity<CommonResponse> handleApplicationException(ApplicationException e){
     log.error("{} {}", e, e.getErrorCode().toString());
+    e.printStackTrace();
     return ResponseEntity.status(e.getErrorCode().getHttpStatus())
         .body(new CommonResponse(false, e.getErrorCode().getHttpStatus(), e.getErrorCode().getMessage()));
   }
@@ -22,6 +24,7 @@ public class GlobalExceptionHandler {
   @ExceptionHandler(RuntimeException.class)
   protected ResponseEntity<CommonResponse> handleRuntimeException(RuntimeException e) {
     log.error(e.getMessage());
+    e.printStackTrace();
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(new CommonResponse(false,HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
   }

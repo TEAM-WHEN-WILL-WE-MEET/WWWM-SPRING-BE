@@ -1,6 +1,7 @@
 package org.example.whenwillwemeet.security;
 
 import java.util.Collection;
+import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bson.types.ObjectId;
@@ -11,7 +12,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 @AllArgsConstructor
 public class UserDetailsImpl implements UserDetails {
 
-  private ObjectId userId;
+  private UUID userId;
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {

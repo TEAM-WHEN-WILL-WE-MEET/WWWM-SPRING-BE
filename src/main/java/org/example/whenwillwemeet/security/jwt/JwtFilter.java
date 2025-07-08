@@ -7,12 +7,13 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.example.whenwillwemeet.common.exception.ApplicationException;
 import org.example.whenwillwemeet.common.exception.ErrorCode;
 import org.example.whenwillwemeet.security.UserDetailsImpl;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -27,7 +28,9 @@ import org.springframework.web.filter.OncePerRequestFilter;
 public class JwtFilter extends OncePerRequestFilter {
 
   private final JwtUtils jwtUtils;
-  private final List<String> publicURLs = List.of("/api/v2/users/auth/signup", "/api/v2/users/auth/login", "/");
+
+  @Value("${jwt.public-url}")
+  private List<String> publicURLs;
 
   @Override
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -47,12 +50,12 @@ public class JwtFilter extends OncePerRequestFilter {
     }
 
     Claims claim = jwtUtils.getUserInfoFromToken(tokenValue);
-    setUserIdToSecurityContextHolder(new ObjectId(claim.get(JwtUtils.ID_KEY).toString()));
+    setUserIdToSecurityContextHolder(UUID.fromString(claim.get(jwtUtils.ID_KEY).toString()));
 
     filterChain.doFilter(request, response);
   }
 
-  public void setUserIdToSecurityContextHolder(ObjectId userId) {
+  public void setUserIdToSecurityContextHolder(UUID userId) {
     SecurityContext context = SecurityContextHolder.createEmptyContext();
     UserDetails userDetails = new UserDetailsImpl(userId);
     context.setAuthentication(

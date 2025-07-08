@@ -1,6 +1,7 @@
 package org.example.whenwillwemeet.controller;
 
 import jakarta.validation.Valid;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -59,7 +60,7 @@ public class UserController {
      * @return 사용자 정보 (이름, 이메일, 비밀번호)
      */
     @GetMapping("/me")
-    public ResponseEntity<CommonResponse> getMyInfo(@LoginUserId ObjectId loginUserId) {
+    public ResponseEntity<CommonResponse> getMyInfo(@LoginUserId UUID loginUserId) {
       CommonResponse response = userCRUDService.getMyInfo(loginUserId);
       return ResponseEntity.status(response.getStatus()).body(response);
     }
@@ -72,7 +73,7 @@ public class UserController {
      */
     @PatchMapping("")
     public ResponseEntity<CommonResponse> updateUser(@Valid @RequestBody UserPatchDto userPatchDto,
-        @LoginUserId ObjectId loginUserId) {
+        @LoginUserId UUID loginUserId) {
         CommonResponse response = userCRUDService.updateUser(userPatchDto, loginUserId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }

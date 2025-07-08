@@ -1,24 +1,20 @@
 package org.example.whenwillwemeet.service;
 
-import java.util.Collections;
-import java.util.List;
+
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.exception.ApplicationException;
 import org.example.whenwillwemeet.common.exception.ErrorCode;
-import org.example.whenwillwemeet.data.dao.AppointmentDAO;
 import org.example.whenwillwemeet.data.dao.UserDAO;
 import org.example.whenwillwemeet.data.dto.UserInfoDto;
 import org.example.whenwillwemeet.data.dto.UserPatchDto;
-import org.example.whenwillwemeet.data.model.AppointmentModel;
-import org.example.whenwillwemeet.data.model.UserModel;
+import org.example.whenwillwemeet.domain.entity.User;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
@@ -32,7 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class UserCRUDService {
 
-    private final AppointmentDAO appointmentDAO;
     private final UserDAO userDAO;
     private final PasswordEncoder passwordEncoder;
 
@@ -42,12 +37,12 @@ public class UserCRUDService {
      * @return 사용자 정보 DTO 포함 응답
      */
     @Transactional(readOnly = true)
-    public CommonResponse getMyInfo(ObjectId loginUserId) {
+    public CommonResponse getMyInfo(UUID loginUserId) {
         // 사용자 조회
-        UserModel userModel = userDAO.findById(loginUserId)
+        User user = userDAO.findById(loginUserId)
             .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
         // 사용자 정보를 DTO 로 감싸 반환
-        return new CommonResponse(true, HttpStatus.OK, "요청이 성공적으로 처리되었습니다.", UserInfoDto.of(userModel));
+        return new CommonResponse(true, HttpStatus.OK, "요청이 성공적으로 처리되었습니다.", UserInfoDto.of(user));
     }
 
     /**
@@ -59,15 +54,15 @@ public class UserCRUDService {
      * @return 수정 완료 응답
      */
     @Transactional
-    public CommonResponse updateUser(UserPatchDto userPatchDto, ObjectId loginUserId) {
+    public CommonResponse updateUser(UserPatchDto userPatchDto, UUID loginUserId) {
         // 사용자 조회
-        UserModel targetUser = userDAO.findById(loginUserId)
+        User targetUser = userDAO.findById(loginUserId)
             .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
         StringBuilder sb = new StringBuilder();
+
         /**
          * TODO: name, email, password 비즈니스 로직에 맞게 유효성 검사 필요
          */
-
         // 사용자 정보 수정. 수정 된 필드 이름을 sb에 추가
         if (!userPatchDto.name().isBlank()) {
             sb.append("name ");
@@ -83,17 +78,6 @@ public class UserCRUDService {
         }
         // 변경사항 저장
         userDAO.save(targetUser);
-
-        // 해당 사용자가 참여한 모든 약속의 사용자 정보 (AppointmentUser) 도 함께 업데이트
-        List<AppointmentModel> appointments = Optional.ofNullable(targetUser.getAppointments())
-            .orElse(Collections.emptyList());
-
-        for (AppointmentModel appointmentModel : appointments) {
-            appointmentModel.getUsers().stream()
-                .filter(user -> user.getId().equals(targetUser.getId())) // 약속에서 사용자 찾기
-                .forEach(me -> me.patchData(targetUser)); // 사용자 정보 패치
-            appointmentDAO.saveAppointment(appointmentModel); // 변경사항 저장
-        }
 
         return new CommonResponse(true, HttpStatus.OK, "User information about ("+ sb.toString() +") updated successfully [" + targetUser.getName() + "]");
     }

@@ -28,7 +28,13 @@ public enum ErrorCode {
   USER_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 3002, "존재하지 않는 유저입니다."),
 
   // 4000 Appointment Error
-  APPOINTMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 4000, "약속을 찾을 수 없습니다.");
+  APPOINTMENT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 4000, "약속을 찾을 수 없습니다."),
+
+  // 5000 Schedule Error
+  SCHEDULE_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 5000 , "스케쥴을 찾을 수 없습니다."),
+  // 6000 TimeSlot Error
+  TIMESLOT_NOT_FOUND_EXCEPTION(HttpStatus.NOT_FOUND, 6000 , "Timeslot을 찾을 수 없습니다.");
+
   private final HttpStatus httpStatus;
   private final Integer code;
   private final String message;

@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 import java.util.Base64;
 import java.util.Date;
+import java.util.UUID;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.bson.types.ObjectId;
@@ -24,13 +25,21 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class JwtUtils {
 
-  public static final String AUTHORIZATION_HEADER = "Authorization";
-  public static final String ID_KEY = "id";
-  private final String BEARER_PREFIX = "Bearer ";
-  private final long TOKEN_TIME = 3600000;
+  @Value("${jwt.utils.authorization-header}")
+  public String AUTHORIZATION_HEADER;
+
+  @Value("${jwt.utils.id-key}")
+  public String ID_KEY;
+
+  @Value("${jwt.utils.bearer-prefix}")
+  private String BEARER_PREFIX;
+
+  @Value("${jwt.utils.token-time}")
+  private long TOKEN_TIME;
 
   @Value("${jwt.secret.key}") // Base64 Encode 한 SecretKey
   private String secretKey;
+
   private Key key;
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithm.HS256;
 
@@ -41,12 +50,12 @@ public class JwtUtils {
     key = Keys.hmacShaKeyFor(bytes);
   }
 
-  public String createToken(ObjectId userId) {
+  public String createToken(UUID userId) {
     Date date = new Date();
     return BEARER_PREFIX +
         Jwts.builder()
             .setSubject(userId.toString()) // 사용자 식별자값(ID)
-            .claim(ID_KEY, userId.toHexString())
+            .claim(ID_KEY, userId.toString())
             .setExpiration(new Date(date.getTime() + TOKEN_TIME)) // 만료 시간
             .setIssuedAt(date) // 발급일
             .signWith(key, signatureAlgorithm) // 암호화 알고리즘
