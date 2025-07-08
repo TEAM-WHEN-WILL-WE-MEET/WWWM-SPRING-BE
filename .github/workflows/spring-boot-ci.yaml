@@ -20,17 +20,17 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      ## create application-private.properties
-      - name: make application-private.properties
+      ## create application-private.yml
+      - name: make application-private.yml
         run: |
-          ## create application-private.properties
+          ## create application-private.yml
           cd ./src/main/resources
           
-          # application-private.properties 파일 생성
-          touch ./application-private.properties
+          # application-private.yml 파일 생성
+          touch ./application-private.yml
           
-          # GitHub-Actions 에서 설정한 값을 application-private.properties 파일에 쓰기
-          echo "${{ secrets.SPRING_BE_APPLICATION_PRIVATE }}" >> ./application-private.properties
+          # GitHub-Actions 에서 설정한 값을 application-private.yml 파일에 쓰기
+          echo "${{ secrets.SPRING_BE_APPLICATION_PRIVATE }}" >> ./application-private.yml
         shell: bash
 
       # gradle build
