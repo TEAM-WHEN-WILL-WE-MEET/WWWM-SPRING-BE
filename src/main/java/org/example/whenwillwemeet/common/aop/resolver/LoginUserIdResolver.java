@@ -1,7 +1,6 @@
 package org.example.whenwillwemeet.common.aop.resolver;
 
 import java.util.UUID;
-import org.bson.types.ObjectId;
 import org.example.whenwillwemeet.common.aop.annotation.LoginUserId;
 import org.example.whenwillwemeet.common.exception.ApplicationException;
 import org.example.whenwillwemeet.common.exception.ErrorCode;

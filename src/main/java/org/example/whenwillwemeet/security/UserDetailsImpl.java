@@ -4,7 +4,6 @@ import java.util.Collection;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
-import org.bson.types.ObjectId;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 

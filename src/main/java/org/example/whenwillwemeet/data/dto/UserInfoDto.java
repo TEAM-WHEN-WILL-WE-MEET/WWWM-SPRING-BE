@@ -1,7 +1,6 @@
 package org.example.whenwillwemeet.data.dto;
 
 import lombok.Builder;
-import org.example.whenwillwemeet.data.model.UserModel;
 import org.example.whenwillwemeet.domain.entity.User;
 
 @Builder
