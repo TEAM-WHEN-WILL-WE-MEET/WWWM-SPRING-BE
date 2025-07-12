@@ -7,7 +7,6 @@ import org.example.whenwillwemeet.common.exception.ErrorCode;
 import org.example.whenwillwemeet.data.dao.UserDAO;
 import org.example.whenwillwemeet.data.dto.UserLoginDto;
 import org.example.whenwillwemeet.data.dto.UserSignupDto;
-import org.example.whenwillwemeet.data.model.UserModel;
 import org.example.whenwillwemeet.domain.entity.User;
 import org.example.whenwillwemeet.security.jwt.JwtUtils;
 import org.springframework.http.HttpStatus;

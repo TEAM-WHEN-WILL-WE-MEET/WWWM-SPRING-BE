@@ -4,7 +4,6 @@ import jakarta.validation.Valid;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.bson.types.ObjectId;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.aop.annotation.LoginUserId;
 import org.example.whenwillwemeet.data.dto.UserLoginDto;
