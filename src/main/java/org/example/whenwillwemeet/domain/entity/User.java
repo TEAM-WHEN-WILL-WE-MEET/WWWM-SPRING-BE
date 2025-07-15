@@ -8,6 +8,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import java.time.LocalDateTime;
+import java.util.Objects;
 import java.util.UUID;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -51,24 +52,61 @@ public class User {
         .build();
   }
 
-  public void patchName(String name) {
-    if (name.isBlank()) {
-      return;
+  public boolean patchName(String name) {
+    if (!isValidName(name)) {
+      return false;
     }
     this.name = name;
+    return true;
   }
 
-  public void patchEmail(String email) {
-    if (email.isBlank()) {
-      return;
+  public boolean patchEmail(String email) {
+    if (!isValidEmail(email)) {
+      return false;
     }
     this.email = email;
+    return true;
   }
 
-  public void patchPassword(String encodedPassword) {
-    if (encodedPassword.isBlank()) {
-      return;
+  public boolean patchPassword(String encodedPassword) {
+    if (!isValidPassword(encodedPassword)) {
+      return false;
     }
     this.password = encodedPassword;
+    return true;
   }
+
+  public boolean isValidName(String name) {
+    if (Objects.isNull(name)) {
+      return false;
+    }
+    if (name.isBlank()) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isValidEmail(String email) {
+    if (Objects.isNull(email)) {
+      return false;
+    }
+    if (email.isBlank()) {
+      return false;
+    }
+    if (!email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$")) {
+      return false;
+    }
+    return true;
+  }
+
+  public boolean isValidPassword(String encodedPassword) {
+    if (Objects.isNull(encodedPassword)) {
+      return false;
+    }
+    if (encodedPassword.isBlank()) {
+      return false;
+    }
+    return true;
+  }
+
 }
