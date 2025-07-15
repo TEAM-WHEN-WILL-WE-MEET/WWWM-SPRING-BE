@@ -64,18 +64,21 @@ public class UserCRUDService {
          * TODO: name, email, password 비즈니스 로직에 맞게 유효성 검사 필요
          */
         // 사용자 정보 수정. 수정 된 필드 이름을 sb에 추가
-        if (!userPatchDto.name().isBlank()) {
-            sb.append("name ");
-            targetUser.patchName(userPatchDto.name());
+        if (targetUser.patchName(userPatchDto.name())) {
+          sb.append("name ");
         }
-        if (!userPatchDto.email().isBlank()) {
-            sb.append("email ");
-            targetUser.patchEmail(userPatchDto.email());
+
+        if (targetUser.patchEmail(userPatchDto.email())) {
+          sb.append("email ");
         }
-        if (!userPatchDto.password().isBlank()) {
+
+
+        if (targetUser.isValidPassword(userPatchDto.password())) {
+          if (targetUser.patchPassword(passwordEncoder.encode(userPatchDto.password()))) {
             sb.append("password ");
-            targetUser.patchPassword(passwordEncoder.encode(userPatchDto.password()));
+          }
         }
+
         // 변경사항 저장
         userDAO.save(targetUser);
 
