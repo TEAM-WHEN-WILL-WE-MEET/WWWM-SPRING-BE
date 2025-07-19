@@ -9,8 +9,11 @@ import org.example.whenwillwemeet.converter.ScheduleConverter;
 import org.example.whenwillwemeet.data.dao.UserDAO;
 import org.example.whenwillwemeet.data.dto.AppointmentGetDto.ScheduleGetDto;
 import org.example.whenwillwemeet.data.dto.ScheduleUpdateDto;
+import org.example.whenwillwemeet.data.dto.TimeslotToggleDto;
+import org.example.whenwillwemeet.domain.entity.TimeSlot;
 import org.example.whenwillwemeet.repository.AppointmentRepository;
 import org.example.whenwillwemeet.repository.ScheduleRepository;
+import org.example.whenwillwemeet.repository.TimeSlotRepository;
 import org.example.whenwillwemeet.repository.UserRepository;
 import org.example.whenwillwemeet.domain.entity.Appointment;
 import org.example.whenwillwemeet.domain.entity.Schedule;
@@ -33,6 +36,7 @@ public class ScheduleService {
   private final ScheduleRepository scheduleRepository;
   private final UserTimeSlotRepository userTimeSlotRepository;
   private final UserRepository userRepository;
+  private final TimeSlotRepository timeSlotRepository;
 
   @Transactional(readOnly = true)
   public CommonResponse getSchedule(UUID appointmentId) {
@@ -60,6 +64,52 @@ public class ScheduleService {
     return new CommonResponse(true, HttpStatus.OK, "User [" + userId + "] schedule fetched", result);
   }
 
+  @Transactional
+  public CommonResponse enableTimeslot(UUID appointmentId, Long scheduleId, TimeslotToggleDto dto, UUID loginUserId) {
+    // 1. User 조회
+    User loginUser = userDAO.findById(loginUserId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+    // 2. Schedule 프록시 조회
+    Schedule schedule = scheduleRepository.getReferenceById(scheduleId);
+
+    List<TimeSlot> targetTimeSlots = timeSlotRepository.findByScheduleAndTimeIn(schedule,
+        dto.getTimes());
+
+    List<UserTimeSlot> savedUsers = targetTimeSlots.stream()
+        .map(timeSlot -> timeSlot.addUser(loginUser))
+        .toList();
+
+    userTimeSlotRepository.saveAll(savedUsers);
+
+    return new CommonResponse(true, HttpStatus.OK,
+        "Schedule [" + scheduleId + "], User [" + loginUser.getId()
+            + "] updated (toggle enabled)");
+  }
+
+  @Transactional
+  public CommonResponse disabledTimeslot(UUID appointmentId, Long scheduleId, TimeslotToggleDto dto, UUID loginUserId) {
+    // 1. User 조회
+    User loginUser = userDAO.findById(loginUserId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+
+    // 2. Schedule 프록시 조회
+    Schedule schedule = scheduleRepository.getReferenceById(scheduleId);
+
+    List<TimeSlot> targetTimeSlots = timeSlotRepository.findByScheduleAndTimeIn(schedule,
+        dto.getTimes());
+
+    List<UserTimeSlot> byUserAndTimeSlotIn = userTimeSlotRepository.findByUserAndTimeSlotIn(
+        loginUser, targetTimeSlots);
+
+    userTimeSlotRepository.deleteAll(byUserAndTimeSlotIn);
+
+    return new CommonResponse(true, HttpStatus.OK,
+        "Schedule [" + scheduleId + "], User [" + loginUser.getId()
+            + "] updated (toggle disabled)");
+  }
+
+  @Deprecated
   @Transactional
   public CommonResponse updateUserTimeSlots(UUID appointmentId, ScheduleUpdateDto dto, UUID loginUserId) {
     // 1. User 조회
@@ -92,62 +142,4 @@ public class ScheduleService {
         "Schedule [" + dto.getScheduleId() + "], User [" + loginUser.getId()
             + "] updated");
   }
-
-
-  /*
-  // 주어진 Schedule 정보를 기반으로 현재 Appointment 모델과 비교하여 사용자를 TimeSlot에 추가하거나 제거
-  // 즉, Frontend에서 발생한 이벤트를 전달해주면 자동으로 현재 DB의 데이터와 비교하여 Toggle
-  @Transactional
-  @Deprecated
-  public CommonResponse updateSchedule(ScheduleUpdateDto dto, UUID loginUserId) {
-    // 1. User, Schedule 조회
-    User loginUser = userDAO.findById(loginUserId)
-        .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
-    Schedule targetSchedule = scheduleRepository.findById(dto.getScheduleId())
-        .orElseThrow(() -> new ApplicationException(ErrorCode.SCHEDULE_NOT_FOUND_EXCEPTION));
-
-    List<LocalDateTime> requestedTimes = dto.getTimes();
-
-    // 2. 해당 스케줄의 TimeSlot 중 요청된 시간에 해당하는 것만 조회
-    List<TimeSlot> relevantTimeSlots = timeSlotRepository.findByScheduleAndTimeIn(targetSchedule,
-        requestedTimes);
-
-    // 3. 현재 유저가 이미 참여한 UserTimeSlot 조회
-    List<UserTimeSlot> userJoinedSlots = userTimeSlotRepository.findByUserAndTimeSlotIn(loginUser,
-        relevantTimeSlots);
-
-    // 4. 유저가 이미 참여한 시간 추출
-    Set<LocalDateTime> joinedTimes = userJoinedSlots.stream()
-        .map(fus -> {
-          return fus.getTimeSlot().getTime();
-        })
-        .collect(Collectors.toSet());
-
-    // 5. 아직 참여하지 않은 시간 필터링
-    List<TimeSlot> newJoinTargets = relevantTimeSlots.stream()
-        .filter(slot -> !joinedTimes.contains(slot.getTime()))
-        .collect(Collectors.toList());
-
-    // 6. 새로 참여할 UserTimeSlot 생성
-    List<UserTimeSlot> userSlotsToInsert = newJoinTargets.stream()
-        .map(slot -> {
-          UserTimeSlot uts = UserTimeSlot.builder()
-              .user(loginUser)
-              .timeSlot(slot)
-              .build();
-          uts.applyRelationships(loginUser, slot); // 양방향 연관
-          return uts;
-        })
-        .toList();
-
-    userTimeSlotRepository.saveAll(userSlotsToInsert);
-    userTimeSlotRepository.deleteAll(userJoinedSlots);
-
-    return new CommonResponse(true, HttpStatus.OK,
-        "Schedule [" + dto.getScheduleId() + "], User [" + loginUser.getId()
-            + "] updated");
-  }
-
-   */
-
 }
