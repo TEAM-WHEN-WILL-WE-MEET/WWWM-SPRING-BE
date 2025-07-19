@@ -99,10 +99,7 @@ public class ScheduleService {
     List<TimeSlot> targetTimeSlots = timeSlotRepository.findByScheduleAndTimeIn(schedule,
         dto.getTimes());
 
-    List<UserTimeSlot> byUserAndTimeSlotIn = userTimeSlotRepository.findByUserAndTimeSlotIn(
-        loginUser, targetTimeSlots);
-
-    userTimeSlotRepository.deleteAll(byUserAndTimeSlotIn);
+    userTimeSlotRepository.deleteByUserAndTimeSlotIn(loginUser, targetTimeSlots);
 
     return new CommonResponse(true, HttpStatus.OK,
         "Schedule [" + scheduleId + "], User [" + loginUser.getId()
