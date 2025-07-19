@@ -1,6 +1,7 @@
 package org.example.whenwillwemeet.repository;
 
 import java.util.List;
+import java.util.Optional;
 import org.example.whenwillwemeet.domain.entity.Appointment;
 import org.example.whenwillwemeet.domain.entity.User;
 import org.example.whenwillwemeet.domain.entity.UserAppointment;
@@ -13,4 +14,8 @@ public interface UserAppointmentRepository extends JpaRepository<UserAppointment
 
   @EntityGraph(attributePaths = {"appointment"})
   List<UserAppointment> findByUser(User user);
+
+  void deleteByAppointmentAndUser(Appointment appointmentReference, User me);
+
+  int countByAppointment(Appointment appointmentRef);
 }

@@ -17,8 +17,10 @@ import org.example.whenwillwemeet.domain.entity.Schedule;
 import org.example.whenwillwemeet.domain.entity.User;
 import org.example.whenwillwemeet.domain.entity.UserAppointment;
 import org.example.whenwillwemeet.repository.AppointmentRepository;
+import org.example.whenwillwemeet.repository.ScheduleRepository;
 import org.example.whenwillwemeet.repository.UserAppointmentRepository;
 import org.example.whenwillwemeet.repository.UserRepository;
+import org.example.whenwillwemeet.repository.UserTimeSlotRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -38,6 +40,8 @@ public class AppointmentService {
   private final UserRepository userRepository;
   private final UserAppointmentRepository userAppointmentRepository;
   private final AppointmentRepository appointmentRepository;
+  private final UserTimeSlotRepository userTimeSlotRepository;
+  private final ScheduleRepository scheduleRepository;
 
   /**
    * 특정 ID의 약속을 조회하며, 로그인한 사용자가 해당 약속에 참여하지 않은 경우 자동으로 연결
@@ -123,5 +127,30 @@ public class AppointmentService {
         .map(AppointmentConverter::toMyAppointmentGetDto)
         .toList();
     return new CommonResponse(true, HttpStatus.OK, "요청이 정상적으로 처리 되었습니다.", list);
+  }
+
+  @Transactional
+  public CommonResponse exitAppointment(UUID appointmentId, UUID loginUserId) {
+    // 1. 사용자 조회
+    User me = userDAO.findById(loginUserId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.USER_NOT_FOUND_EXCEPTION));
+    
+    // 2. 약속 조회
+    Appointment appointment = appointmentRepository.findById(appointmentId)
+        .orElseThrow(() -> new ApplicationException(ErrorCode.APPOINTMENT_NOT_FOUND_EXCEPTION));
+    
+    // 3. 약속-사용자 연관관계 제거
+    userAppointmentRepository.deleteByAppointmentAndUser(appointment, me);
+
+    // 4. TimeSlot - 사용자 연관관계 제거
+    List<Schedule> schedules = scheduleRepository.findByAppointment(appointment);
+    userTimeSlotRepository.deleteByUserAndTimeSlot_ScheduleIn(me, schedules);
+    
+    // 5. 만약 약속에 아무도 남지 않았을 경우 약속 삭제
+    if (userAppointmentRepository.countByAppointment(appointment) == 0) {
+      appointmentRepository.delete(appointment);
+    }
+
+    return new CommonResponse(true, HttpStatus.OK, "User [" + loginUserId + "] exit from appointment [" + appointmentId + "]");
   }
 }

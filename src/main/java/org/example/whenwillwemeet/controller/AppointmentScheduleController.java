@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.aop.annotation.LoginUserId;
 import org.example.whenwillwemeet.data.dto.ScheduleUpdateDto;
+import org.example.whenwillwemeet.data.dto.TimeslotToggleDto;
 import org.example.whenwillwemeet.service.ScheduleService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,6 +26,7 @@ public class AppointmentScheduleController {
     return ResponseEntity.status(response.getStatus()).body(response);
   }
 
+  @Deprecated
   @PatchMapping("")
   public ResponseEntity<CommonResponse> updateUserTimeSlots(
       @PathVariable UUID appointmentId,
@@ -33,6 +35,24 @@ public class AppointmentScheduleController {
   ) {
     CommonResponse response = scheduleService.updateUserTimeSlots(appointmentId, schedule,
         loginUserId);
+    return ResponseEntity.status(response.getStatus()).body(response);
+  }
+
+  @PatchMapping("/{scheduleId}/timeslots/toggle")
+  public ResponseEntity<CommonResponse> updateTimeSlots(
+      @PathVariable UUID appointmentId,
+      @PathVariable Long scheduleId,
+      @Valid @RequestBody TimeslotToggleDto dto,
+      @LoginUserId UUID loginUserId
+  ) {
+    CommonResponse response;
+    if (dto.isEnabled()) {
+      response = scheduleService.enableTimeslot(appointmentId, scheduleId, dto, loginUserId);
+    }
+    else {
+      response = scheduleService.disabledTimeslot(appointmentId, scheduleId, dto, loginUserId);
+    }
+
     return ResponseEntity.status(response.getStatus()).body(response);
   }
 

@@ -65,4 +65,11 @@ public class AppointmentController {
         CommonResponse response = appointmentService.createAppointment(appointmentCreateDto, loginUserId);
         return ResponseEntity.status(response.getStatus()).body(response);
     }
+
+    @DeleteMapping("/{appointmentId}")
+    public ResponseEntity<CommonResponse> exitAppointment(@PathVariable UUID appointmentId,
+        @LoginUserId UUID loginUserId) {
+        CommonResponse response = appointmentService.exitAppointment(appointmentId, loginUserId);
+        return ResponseEntity.status(response.getStatus()).body(response);
+    }
 }
