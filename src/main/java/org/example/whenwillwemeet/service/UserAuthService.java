@@ -1,5 +1,6 @@
 package org.example.whenwillwemeet.service;
 
+import java.util.Objects;
 import lombok.RequiredArgsConstructor;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.exception.ApplicationException;
@@ -7,6 +8,7 @@ import org.example.whenwillwemeet.common.exception.ErrorCode;
 import org.example.whenwillwemeet.data.dao.UserDAO;
 import org.example.whenwillwemeet.data.dto.UserLoginDto;
 import org.example.whenwillwemeet.data.dto.UserSignupDto;
+import org.example.whenwillwemeet.data.enumerate.AuthProvider;
 import org.example.whenwillwemeet.domain.entity.User;
 import org.example.whenwillwemeet.security.jwt.JwtUtils;
 import org.springframework.http.HttpStatus;
@@ -62,9 +64,17 @@ public class UserAuthService {
       throw new ApplicationException(ErrorCode.ALREADY_EXIST_EXCEPTION);
     }
 
+    AuthProvider saveProvider;
+    if (Objects.isNull(userSignupDto.provider())) {
+      saveProvider = AuthProvider.NATIVE;
+    }
+    else {
+      saveProvider = userSignupDto.provider();
+    }
+
     // 2. 사용자 모델 생성 후 저장 (비밀번호는 인코딩)
     userDAO.save(User.create(userSignupDto.name(), userSignupDto.email(),
-        passwordEncoder.encode(userSignupDto.password())));
+        passwordEncoder.encode(userSignupDto.password()), saveProvider));
 
     // 3. 성공 응답 반환
     return new CommonResponse(true, HttpStatus.CREATED, "회원가입이 정상적으로 완료되었습니다.");

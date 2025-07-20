@@ -14,6 +14,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.example.whenwillwemeet.data.enumerate.AuthProvider;
 import org.springframework.data.annotation.CreatedDate;
 
 @Entity
@@ -38,16 +39,20 @@ public class User {
   @Column(nullable = false)
   private String password;
 
+  @Column(nullable = false)
+  private AuthProvider provider;
+
   @CreatedDate
   @Column(name = "created_at", nullable = false)
   private LocalDateTime createdAt;
 
-  public static User create(@NotBlank String name, @NotBlank String email, String encodedPassword) {
+  public static User create(@NotBlank String name, @NotBlank String email, String encodedPassword, AuthProvider provider) {
     return User.builder()
         .id(UUID.randomUUID())
         .name(name)
         .email(email)
         .password(encodedPassword)
+        .provider(provider)
         .createdAt(LocalDateTime.now())
         .build();
   }
