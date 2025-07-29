@@ -1,0 +1,89 @@
+name: Spring Boot CI with Gradle
+
+on:
+  push:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      ### 1. CI: 소스 코드 빌드 및 Docker 이미지 생성
+      - name: checkout
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      # create application-private.yml
+      - name: make application-private.yml
+        run: |
+          ## create application-private.yml
+          cd ./src/main/resources
+          
+          # application-private.yml 파일 생성
+          touch ./application-private.yml
+          
+          # GitHub-Actions 에서 설정한 값을 application-private.yml 파일에 쓰기
+          echo "${{ secrets.SPRING_BE_APPLICATION_PRIVATE }}" >> ./application-private.yml
+        shell: bash
+
+      # gradle build
+      - name: Build with Gradle
+        run: |
+          chmod +x ./gradlew
+          ./gradlew bootJar
+        shell: bash
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.ORG_JUDEMIN_DOCKERHUB_USERNAME }}
+          password: ${{ secrets.ORG_JUDEMIN_DOCKERHUB_PASSWORD }}
+
+      - name: Set Unique Image Tag
+        id: image_tag
+        run: echo "tag=$(echo ${GITHUB_SHA} | cut -c1-7)" >> $GITHUB_OUTPUT
+
+      - name: Docker Build and Push
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          push: true
+          tags: judemin/wwwm-spring-be:${{ steps.image_tag.outputs.tag }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      ### 2. CD: WWWM-INFRA Repo의 K8s 매니페스트 업데이트
+      - name: Checkout Infra Repository
+        uses: actions/checkout@v3
+        with:
+          repository: 'TEAM-WHEN-WILL-WE-MEET/WWWM-INFRA'
+          token: ${{ secrets.PAT_FOR_INFRA_REPO }}
+          path: 'WWWM-INFRA'
+
+      - name: Update Kubernetes Manifest
+        run: |
+          # 수정할 매니페스트 파일 경로 지정
+          TARGET_FILE="WWWM-INFRA/kubernetes-master/wwwm-spring-be/v2-spring-deployment-dev.yaml"
+          
+          # sed 명령어로 이미지 태그를 새로 빌드된 태그로 교체
+          sed -i "s|image: judemin/wwwm-spring-be:.*|image: judemin/wwwm-spring-be:${{ steps.image_tag.outputs.tag }}|g" $TARGET_FILE
+
+          # git 설정 및 변경사항 커밋/푸시
+          cd WWWM-INFRA
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git add .
+          git commit -m "CI: Update wwwm-spring-be image to ${{ steps.image_tag.outputs.tag }}"
+          git push
+        shell: bash     
