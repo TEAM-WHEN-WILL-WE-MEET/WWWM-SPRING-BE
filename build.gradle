@@ -56,4 +56,13 @@ dependencies {
 
 tasks.named('test') {
 	useJUnitPlatform()
+
+	// 내부 클래스를 독립 테스트 클래스로 스캔하지 않도록
+	exclude '**/*$*'
+
+	// 실패 원인 보기 편하게
+	testLogging {
+		events "PASSED", "FAILED", "SKIPPED", "STANDARD_OUT", "STANDARD_ERROR"
+		exceptionFormat "FULL"
+	}
 }
