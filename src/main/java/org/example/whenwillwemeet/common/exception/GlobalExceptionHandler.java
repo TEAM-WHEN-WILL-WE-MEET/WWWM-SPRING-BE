@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
   @ExceptionHandler(ApplicationException.class)
   protected ResponseEntity<CommonResponse> handleApplicationException(ApplicationException e){
-    log.error("{} {}", e, e.getErrorCode().toString());
+    log.error("AppException error.name ={}, status={}, code={}, msg={},",e.getErrorCode().name(), e.getErrorCode().getHttpStatus(), e.getErrorCode().getCode(), e.getErrorCode().getMessage());
     e.printStackTrace();
     return ResponseEntity.status(e.getErrorCode().getHttpStatus())
         .body(new CommonResponse(false, e.getErrorCode().getHttpStatus(), e.getErrorCode().getMessage()));
@@ -23,7 +23,7 @@ public class GlobalExceptionHandler {
 
   @ExceptionHandler(RuntimeException.class)
   protected ResponseEntity<CommonResponse> handleRuntimeException(RuntimeException e) {
-    log.error(e.getMessage());
+    log.error("UnhandledException msg={}", e.getMessage());
     e.printStackTrace();
     return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
         .body(new CommonResponse(false,HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage()));
