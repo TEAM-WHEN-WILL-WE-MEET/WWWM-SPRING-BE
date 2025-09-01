@@ -1,6 +1,7 @@
 package org.example.whenwillwemeet.service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.example.whenwillwemeet.common.CommonResponse;
 import org.example.whenwillwemeet.common.exception.ApplicationException;
 import org.example.whenwillwemeet.common.exception.ErrorCode;
@@ -19,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
  * - 로그인 처리
  * - 회원가입 처리
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -34,18 +36,23 @@ public class UserAuthService {
    * @return JWT 토큰을 포함한 응답 객체
    */
   public CommonResponse login(UserLoginDto userLoginDto) {
+    log.info("로그인 요청 - email={}", userLoginDto.email());
     // 1. 이메일로 사용자 조회
     User byEmail = userDAO.findByEmail(userLoginDto.email())
-        .orElseThrow(() -> new ApplicationException(ErrorCode.NOT_FOUND_BY_EMAIL_EXCEPTION));
+        .orElseThrow(() -> {
+          log.warn("로그인 실패 - 존재하지 않는 이메일");
+          return new ApplicationException(ErrorCode.NOT_FOUND_BY_EMAIL_EXCEPTION);
+        });
 
     // 2. 비밀번호 일치 여부 검증
     if (!passwordEncoder.matches(userLoginDto.password(), byEmail.getPassword())) {
+      log.warn("로그인 실패 - 비밀번호 불일치");
       throw new ApplicationException(ErrorCode.INVALID_PASSWORD_EXCEPTION);
     }
 
     // 3. 사용자 ID를 기반으로 JWT 토큰 생성
     String token = jwtUtils.createToken(byEmail.getId());
-
+    log.info("로그인 성공 - userId={}", byEmail.getId());
     // 4. 성공 응답 반환 (JWT 토큰 포함)
     return new CommonResponse(true, HttpStatus.OK, "로그인이 정상적으로 완료되었습니다.", token);
   }
@@ -57,15 +64,17 @@ public class UserAuthService {
    */
   @Transactional
   public CommonResponse signup(UserSignupDto userSignupDto) {
+    log.info("회원가입 요청 - email={}, name={}", userSignupDto.email(), userSignupDto.name());
     // 1. 이메일 중복 확인
     if(userDAO.findByEmail(userSignupDto.email()).isPresent()) {
+      log.warn("회원가입 실패 - 이미 존재하는 이메일");
       throw new ApplicationException(ErrorCode.ALREADY_EXIST_EXCEPTION);
     }
 
     // 2. 사용자 모델 생성 후 저장 (비밀번호는 인코딩)
     userDAO.save(User.create(userSignupDto.name(), userSignupDto.email(),
         passwordEncoder.encode(userSignupDto.password())));
-
+    log.info("회원가입 성공");
     // 3. 성공 응답 반환
     return new CommonResponse(true, HttpStatus.CREATED, "회원가입이 정상적으로 완료되었습니다.");
   }
